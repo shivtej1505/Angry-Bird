@@ -110,13 +110,11 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	return ProgramID;
 }
 
-static void error_callback(int error, const char* description)
-{
+static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
 }
 
-void quit(GLFWwindow *window)
-{
+void quit(GLFWwindow *window) {
     glfwDestroyWindow(window);
     glfwTerminate();
     exit(EXIT_SUCCESS);
@@ -124,8 +122,8 @@ void quit(GLFWwindow *window)
 
 
 /* Generate VAO, VBOs and return VAO handle */
-struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloat* vertex_buffer_data, const GLfloat* color_buffer_data, GLenum fill_mode=GL_FILL)
-{
+struct VAO* create3DObject (GLenum primitive_mode, int numVertices,
+  const GLfloat* vertex_buffer_data, const GLfloat* color_buffer_data, GLenum fill_mode=GL_FILL) {
     struct VAO* vao = new struct VAO;
     vao->PrimitiveMode = primitive_mode;
     vao->NumVertices = numVertices;
@@ -137,8 +135,8 @@ struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloa
     glGenBuffers (1, &(vao->VertexBuffer)); // VBO - vertices
     glGenBuffers (1, &(vao->ColorBuffer));  // VBO - colors
 
-    glBindVertexArray (vao->VertexArrayID); // Bind the VAO 
-    glBindBuffer (GL_ARRAY_BUFFER, vao->VertexBuffer); // Bind the VBO vertices 
+    glBindVertexArray (vao->VertexArrayID); // Bind the VAO
+    glBindBuffer (GL_ARRAY_BUFFER, vao->VertexBuffer); // Bind the VBO vertices
     glBufferData (GL_ARRAY_BUFFER, 3*numVertices*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW); // Copy the vertices into VBO
     glVertexAttribPointer(
                           0,                  // attribute 0. Vertices
@@ -149,7 +147,7 @@ struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloa
                           (void*)0            // array buffer offset
                           );
 
-    glBindBuffer (GL_ARRAY_BUFFER, vao->ColorBuffer); // Bind the VBO colors 
+    glBindBuffer (GL_ARRAY_BUFFER, vao->ColorBuffer); // Bind the VBO colors
     glBufferData (GL_ARRAY_BUFFER, 3*numVertices*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);  // Copy the vertex colors
     glVertexAttribPointer(
                           1,                  // attribute 1. Color
@@ -164,8 +162,8 @@ struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloa
 }
 
 /* Generate VAO, VBOs and return VAO handle - Common Color for all vertices */
-struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloat* vertex_buffer_data, const GLfloat red, const GLfloat green, const GLfloat blue, GLenum fill_mode=GL_FILL)
-{
+struct VAO* create3DObject (GLenum primitive_mode, int numVertices,
+  const GLfloat* vertex_buffer_data, const GLfloat red, const GLfloat green, const GLfloat blue, GLenum fill_mode=GL_FILL) {
     GLfloat* color_buffer_data = new GLfloat [3*numVertices];
     for (int i=0; i<numVertices; i++) {
         color_buffer_data [3*i] = red;
@@ -177,8 +175,7 @@ struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloa
 }
 
 /* Render the VBOs handled by VAO */
-void draw3DObject (struct VAO* vao)
-{
+void draw3DObject (struct VAO* vao) {
     // Change the Fill Mode for this object
     glPolygonMode (GL_FRONT_AND_BACK, vao->FillMode);
 
@@ -208,13 +205,22 @@ float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 
+float camera_rotation_angle = 90;
+float triangle_rotation = 0;
+float circle_center_x = -3.5;
+float circle_center_y = -3.5;
+float circle_u_cos_theta = 0.2f;
+float circle_u_sin_theta = 0.2f;
+
+void moveCircle(float xDiff, float yDiff) {
+  circle_center_x += xDiff;
+  circle_center_y += yDiff;
+}
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
 // mods --> which key has pressed, can be used to differentiate b/w Shift + c and c
-void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) {
      // Function is called first on GLFW_PRESS.
-
     if (action == GLFW_RELEASE) {
         switch (key) {
             case GLFW_KEY_C: // Shift + c or c
@@ -224,7 +230,6 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
                 triangle_rot_status = !triangle_rot_status;
                 break;
             case GLFW_KEY_X:
-                // do something ..
                 break;
             default:
                 break;
@@ -241,9 +246,9 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
     }
 }
 
+
 /* Executed for character input (like in text boxes) */
-void keyboardChar (GLFWwindow* window, unsigned int key)
-{
+void keyboardChar (GLFWwindow* window, unsigned int key) {
 	switch (key) {
 		case 'Q':
 		case 'q':
@@ -255,8 +260,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 }
 
 /* Executed when a mouse button is pressed/released */
-void mouseButton (GLFWwindow* window, int button, int action, int mods)
-{
+void mouseButton (GLFWwindow* window, int button, int action, int mods) {
     switch (button) {
         case GLFW_MOUSE_BUTTON_LEFT:
             if (action == GLFW_RELEASE)
@@ -272,11 +276,9 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-
 /* Executed when window is resized to 'width' and 'height' */
 /* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
-void reshapeWindow (GLFWwindow* window, int width, int height)
-{
+void reshapeWindow (GLFWwindow* window, int width, int height) {
     int fbwidth=width, fbheight=height;
     /* With Retina display on Mac OS X, GLFW's FramebufferSize
      is different from WindowSize */
@@ -306,63 +308,68 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 VAO *triangle, *rectangle;
 
 // Creates the triangle object used in this sample code
-void createTriangle ()
-{
+void createTriangle () {
   /* ONLY vertices between the bounds specified in glm::ortho will be visible on screen */
 
   /* Define vertex array as used in glBegin (GL_TRIANGLES) */
   static const GLfloat vertex_buffer_data [] = {
-    0, 1,0, // vertex 0
-    -1,-1,0, // vertex 1
-    1,-1,0, // vertex 2
+    0, 0,0, // vertex 0
+    0.1,0,0, // vertex 1
+    0,0.1,0, // vertex 2
   };
 
   static const GLfloat color_buffer_data [] = {
-    1,0,0, // color 0
-    0,1,0, // color 1
-    0,0,1, // color 2
+    1,1,1, // color 0
+    1,1,1, // color 1
+    1,1,1, // color 2
   };
 
   // create3DObject creates and returns a handle to a VAO that can be used later
-  triangle = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data, color_buffer_data, GL_LINE);
+  triangle = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
 
-// Creates the rectangle object used in this sample code
-void createRectangle ()
-{
-  // GL3 accepts only Triangles. Quads are not supported
-  static const GLfloat vertex_buffer_data [] = {
-    -1.2,-1,0, // vertex 1
-    1.2,-1,0, // vertex 2
-    1.2, 1,0, // vertex 3
+void makeTriangle(glm::mat4 VP) {
+  // Send our transformation to the currently bound shader, in the "MVP" uniform
+  // For each model you render, since the MVP will be different (at least the M part)
+  //  Don't change unless you are sure!!
+  glm::mat4 MVP;	// MVP = Projection * View * Model
 
-    1.2, 1,0, // vertex 3
-    -1.2, 1,0, // vertex 4
-    -1.2,-1,0  // vertex 1
-  };
+  // Load identity to model matrix
+  // Contains all the transforms of the objects
+  Matrices.model = glm::mat4(1.0f);
 
-  static const GLfloat color_buffer_data [] = {
-    1,0,0, // color 1
-    0,0,1, // color 2
-    0,1,0, // color 3
+  /* Render your scene */
 
-    0,1,0, // color 3
-    0.3,0.3,0.3, // color 4
-    1,0,0  // color 1
-  };
+  glm::mat4 translateTriangle = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
+  glm::mat4 rotateTriangle = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(1,0,0));  // rotate about vector (0,0,1) Rotating about z-axis
+  glm::mat4 triangleTransform = translateTriangle * rotateTriangle;
+  Matrices.model *= triangleTransform;
+  // MVP : model view projection
+  MVP = VP * Matrices.model; // MVP = p * V * M
 
-  // create3DObject creates and returns a handle to a VAO that can be used later
-  rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color_buffer_data, GL_FILL);
+  //  Don't change unless you are sure!!
+  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+  // draw3DObject draws the VAO given to it using current MVP matrix
+  draw3DObject(triangle);
 }
 
-float camera_rotation_angle = 90;
-float rectangle_rotation = 0;
-float triangle_rotation = 0;
-
+void makeCircle(glm::mat4 VP, float x = -3.5f, float y = -3.5f) {
+  glm::mat4 MVP;
+  for(int i=0; i<720; i++) {
+  Matrices.model = glm::mat4(1.0f);
+  float rotAngle = (float)(i * M_PI/360);
+  glm::mat4 translateTriangle = glm::translate (glm::vec3(x, y, 0.0f)); // glTranslatef
+  glm::mat4 rotateTriangle = glm::rotate(rotAngle, glm::vec3(0,0,1));  // rotate about vector (0,0,1) Rotating about z-axis
+  Matrices.model *= (translateTriangle * rotateTriangle);
+  MVP = VP * Matrices.model; // MVP = p * V * M
+  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+  draw3DObject(triangle);
+  }
+}
 /* Render the scene with openGL */
 /* Edit this function according to your assignment */
-void draw ()
-{
+void draw () {
   // clear the color and depth in the frame buffer
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -386,55 +393,18 @@ void draw ()
   //  Don't change unless you are sure!!
   glm::mat4 VP = Matrices.projection * Matrices.view;
 
-  // Send our transformation to the currently bound shader, in the "MVP" uniform
-  // For each model you render, since the MVP will be different (at least the M part)
-  //  Don't change unless you are sure!!
-  glm::mat4 MVP;	// MVP = Projection * View * Model
-
-  // Load identity to model matrix
-  // Contains all the transforms of the objects
-  Matrices.model = glm::mat4(1.0f);
-
-  /* Render your scene */
-
-  glm::mat4 translateTriangle = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
-  glm::mat4 rotateTriangle = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(1,0,0));  // rotate about vector (0,0,1) Rotating about z-axis
-  glm::mat4 triangleTransform = translateTriangle * rotateTriangle;
-  Matrices.model *= triangleTransform; 
-  // MVP : model view projection
-  MVP = VP * Matrices.model; // MVP = p * V * M
-
-  //  Don't change unless you are sure!!
-  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-  // draw3DObject draws the VAO given to it using current MVP matrix
-  draw3DObject(triangle);
-
-  // Pop matrix to undo transformations till last push matrix instead of recomputing model matrix
-  // glPopMatrix ();
-  Matrices.model = glm::mat4(1.0f);
-
-  glm::mat4 translateRectangle = glm::translate (glm::vec3(2, 0, 0));        // glTranslatef
-  glm::mat4 rotateRectangle = glm::rotate((float)(rectangle_rotation*M_PI/180.0f), glm::vec3(0,0,1)); // rotate about vector (-1,1,1)
-  Matrices.model *= (translateRectangle * rotateRectangle);
-  MVP = VP * Matrices.model;
-  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-  // draw3DObject draws the VAO given to it using current MVP matrix
-  draw3DObject(rectangle);
-
+  //makeTriangle(VP);
+  makeCircle(VP, circle_center_x, circle_center_y);
   // Increment angles
-  float increments = 1;
+  float increments = 0;
 
   //camera_rotation_angle++; // Simulating camera rotation
   triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
-  rectangle_rotation = rectangle_rotation + increments*rectangle_rot_dir*rectangle_rot_status;
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
 /* Nothing to Edit here */
-GLFWwindow* initGLFW (int width, int height)
-{
+GLFWwindow* initGLFW (int width, int height) {
     GLFWwindow* window; // window desciptor/handle
 
     glfwSetErrorCallback(error_callback);
@@ -481,19 +451,16 @@ GLFWwindow* initGLFW (int width, int height)
 
 /* Initialize the OpenGL rendering properties */
 /* Add all the models to be created here */
-void initGL (GLFWwindow* window, int width, int height)
-{
+void initGL (GLFWwindow* window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
 	// Create the models
 	createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
-	createRectangle ();
-	
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
 	// Get a handle for our "MVP" uniform
 	Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
 
-	
+
 	reshapeWindow (window, width, height);
 
     // Background color of the scene
@@ -511,15 +478,15 @@ void initGL (GLFWwindow* window, int width, int height)
 
 int main (int argc, char** argv)
 {
-	int width = 600;
-	int height = 600;
+	int width = 800;
+	int height = 800;
 
     GLFWwindow* window = initGLFW(width, height);
 
-	initGL (window, width, height);
+	  initGL (window, width, height);
 
     double last_update_time = glfwGetTime(), current_time;
-
+    double total_time_elapsed = 0;
     /* Draw in loop */
     while (!glfwWindowShouldClose(window)) {
 
@@ -534,9 +501,11 @@ int main (int argc, char** argv)
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.05) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
             last_update_time = current_time;
+            total_time_elapsed += 0.05;
+            moveCircle(0.5 * circle_u_cos_theta, 0.5 * ( circle_u_sin_theta - 0.2 * total_time_elapsed));
         }
     }
 
