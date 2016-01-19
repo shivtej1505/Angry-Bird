@@ -1,3 +1,5 @@
+#include "create_draw.h"
+
 struct VAO* create3DObject (GLenum primitive_mode, int numVertices,
   const GLfloat* vertex_buffer_data, const GLfloat* color_buffer_data, GLenum fill_mode=GL_FILL) {
     struct VAO* vao = new struct VAO;

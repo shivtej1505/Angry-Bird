@@ -1,14 +1,12 @@
 // Class makes the circle
 #include "custom_struct.h"
-#include "create_draw.cpp"
-
-VAO *triangle;
+#include "create_draw.h"
 
 class Circle {
-
-  int center_x, center_y;
+  VAO *triangle;
+  float center_x, center_y;
   public:
-  void initialize(int x, int y, float radius) {
+  void initialize(float x, float y, float radius) {
     center_x = x;
     center_y = y;
     createTriangle(radius);

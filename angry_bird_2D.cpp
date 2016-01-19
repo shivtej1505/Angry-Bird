@@ -11,30 +11,13 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Bird.cpp"
+#include "Cannon.cpp"
 
 using namespace std;
 
-/*struct VAO {
-    GLuint VertexArrayID;
-    GLuint VertexBuffer;
-    GLuint ColorBuffer;
-
-    GLenum PrimitiveMode;
-    GLenum FillMode;
-    int NumVertices;
-};
-typedef struct VAO VAO;*/
-
-/*struct GLMatrices {
-	glm::mat4 projection;
-	glm::mat4 model;
-	glm::mat4 view;
-	GLuint MatrixID;
-} Matrices;*/
-
 GLuint programID;
 Bird bird;
-
+Cannon cannon;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -167,10 +150,12 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
                 bird.decrease_velocity();
                 break;
 						case GLFW_KEY_LEFT:
-		            bird.decrease_angle();
+		            bird.decreaseAngle();
+								cannon.decreaseAngle();
 		            break;
 						case GLFW_KEY_RIGHT:
-								bird.increase_angle();
+								bird.increaseAngle();
+								cannon.increaseAngle();
 								break;
 						case GLFW_KEY_SPACE:
 		            bird.set_fly_status();
@@ -279,6 +264,7 @@ void draw () {
   // Increment angles
   float increments = 0;
   bird.createBird(VP);
+	cannon.createCannon(VP);
   //camera_rotation_angle++; // Simulating camera rotation
   triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
 }
@@ -336,6 +322,7 @@ void initGL (GLFWwindow* window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
 	// Create the models
   bird.initialize();
+	cannon.initialize();
 	//createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
@@ -360,8 +347,8 @@ void initGL (GLFWwindow* window, int width, int height) {
 
 int main (int argc, char** argv)
 {
-	int width = 800;
-	int height = 800;
+	int width = 1000;
+	int height = 1000;
 
     GLFWwindow* window = initGLFW(width, height);
 

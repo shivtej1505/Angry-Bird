@@ -1,5 +1,6 @@
 // Handles all action of birds
 #include "Circle.cpp"
+
 class Bird {
   private:
   Circle circle;
@@ -37,7 +38,7 @@ class Bird {
     }
   }
 
-  void increase_angle() {
+  void increaseAngle() {
     if (!bird_can_fly) {
       projection_angle += 5 * (M_PI/180.0f);
       printf("%f\n",sin(projection_angle) );
@@ -45,7 +46,7 @@ class Bird {
     }
   }
 
-  void decrease_angle() {
+  void decreaseAngle() {
     if (!bird_can_fly) {
       projection_angle -= 5 * (M_PI/180.0f);
       printf("%f\n",projection_angle * (180.0f/M_PI));
