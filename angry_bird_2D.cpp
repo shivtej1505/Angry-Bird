@@ -10,10 +10,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Bird.cpp"
 
 using namespace std;
 
-struct VAO {
+/*struct VAO {
     GLuint VertexArrayID;
     GLuint VertexBuffer;
     GLuint ColorBuffer;
@@ -22,16 +23,17 @@ struct VAO {
     GLenum FillMode;
     int NumVertices;
 };
-typedef struct VAO VAO;
+typedef struct VAO VAO;*/
 
-struct GLMatrices {
+/*struct GLMatrices {
 	glm::mat4 projection;
 	glm::mat4 model;
 	glm::mat4 view;
 	GLuint MatrixID;
-} Matrices;
+} Matrices;*/
 
 GLuint programID;
+Bird bird;
 
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
@@ -122,79 +124,10 @@ void quit(GLFWwindow *window) {
 
 
 /* Generate VAO, VBOs and return VAO handle */
-struct VAO* create3DObject (GLenum primitive_mode, int numVertices,
-  const GLfloat* vertex_buffer_data, const GLfloat* color_buffer_data, GLenum fill_mode=GL_FILL) {
-    struct VAO* vao = new struct VAO;
-    vao->PrimitiveMode = primitive_mode;
-    vao->NumVertices = numVertices;
-    vao->FillMode = fill_mode;
 
-    // Create Vertex Array Object
-    // Should be done after CreateWindow and before any other GL calls
-    glGenVertexArrays(1, &(vao->VertexArrayID)); // VAO
-    glGenBuffers (1, &(vao->VertexBuffer)); // VBO - vertices
-    glGenBuffers (1, &(vao->ColorBuffer));  // VBO - colors
-
-    glBindVertexArray (vao->VertexArrayID); // Bind the VAO
-    glBindBuffer (GL_ARRAY_BUFFER, vao->VertexBuffer); // Bind the VBO vertices
-    glBufferData (GL_ARRAY_BUFFER, 3*numVertices*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW); // Copy the vertices into VBO
-    glVertexAttribPointer(
-                          0,                  // attribute 0. Vertices
-                          3,                  // size (x,y,z)
-                          GL_FLOAT,           // type
-                          GL_FALSE,           // normalized?
-                          0,                  // stride
-                          (void*)0            // array buffer offset
-                          );
-
-    glBindBuffer (GL_ARRAY_BUFFER, vao->ColorBuffer); // Bind the VBO colors
-    glBufferData (GL_ARRAY_BUFFER, 3*numVertices*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);  // Copy the vertex colors
-    glVertexAttribPointer(
-                          1,                  // attribute 1. Color
-                          3,                  // size (r,g,b)
-                          GL_FLOAT,           // type
-                          GL_FALSE,           // normalized?
-                          0,                  // stride
-                          (void*)0            // array buffer offset
-                          );
-
-    return vao;
-}
-
-/* Generate VAO, VBOs and return VAO handle - Common Color for all vertices */
-struct VAO* create3DObject (GLenum primitive_mode, int numVertices,
-  const GLfloat* vertex_buffer_data, const GLfloat red, const GLfloat green, const GLfloat blue, GLenum fill_mode=GL_FILL) {
-    GLfloat* color_buffer_data = new GLfloat [3*numVertices];
-    for (int i=0; i<numVertices; i++) {
-        color_buffer_data [3*i] = red;
-        color_buffer_data [3*i + 1] = green;
-        color_buffer_data [3*i + 2] = blue;
-    }
-
-    return create3DObject(primitive_mode, numVertices, vertex_buffer_data, color_buffer_data, fill_mode);
-}
 
 /* Render the VBOs handled by VAO */
-void draw3DObject (struct VAO* vao) {
-    // Change the Fill Mode for this object
-    glPolygonMode (GL_FRONT_AND_BACK, vao->FillMode);
 
-    // Bind the VAO to use
-    glBindVertexArray (vao->VertexArrayID);
-
-    // Enable Vertex Attribute 0 - 3d Vertices
-    glEnableVertexAttribArray(0);
-    // Bind the VBO to use
-    glBindBuffer(GL_ARRAY_BUFFER, vao->VertexBuffer);
-
-    // Enable Vertex Attribute 1 - Color
-    glEnableVertexAttribArray(1);
-    // Bind the VBO to use
-    glBindBuffer(GL_ARRAY_BUFFER, vao->ColorBuffer);
-
-    // Draw the geometry !
-    glDrawArrays(vao->PrimitiveMode, 0, vao->NumVertices); // Starting from vertex 0; 3 vertices total -> 1 triangle
-}
 
 /**************************
  * Customizable functions *
@@ -219,16 +152,7 @@ void moveCircle(float xDiff, float yDiff) {
     circle_center_x += xDiff;
   }
 }
-void increasePower() {
-  circle_u_velocity += 0.5;
-  printf("%f\n",sin(circle_projection_angle) );
-  printf("%f\n",cos(circle_projection_angle) );
-  printf("%f\n",circle_u_velocity );
-}
-void decreasePower() {
-  circle_u_velocity -= 0.5;
-  printf("%f\n",circle_u_velocity );
-}
+
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
 // mods --> which key has pressed, can be used to differentiate b/w Shift + c and c
@@ -245,13 +169,13 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
             case GLFW_KEY_X:
                 break;
             case GLFW_KEY_UP:
-                increasePower();
+                bird.increase_velocity();
                 break;
             case GLFW_KEY_DOWN:
-                decreasePower();
+                bird.decrease_velocity();
                 break;
             case GLFW_KEY_SPACE:
-                circle_can_move = 1;
+                bird.set_fly_status();
                 break;
             default:
                 break;
@@ -267,7 +191,6 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
         }
     }
 }
-
 
 /* Executed for character input (like in text boxes) */
 void keyboardChar (GLFWwindow* window, unsigned int key) {
@@ -327,70 +250,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height) {
     Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
-VAO *triangle, *rectangle;
 
-// Creates the triangle object used in this sample code
-void createTriangle (float radius = 1.0f) {
-  /* ONLY vertices between the bounds specified in glm::ortho will be visible on screen */
-
-  /* Define vertex array as used in glBegin (GL_TRIANGLES) */
-  static const GLfloat vertex_buffer_data [] = {
-    0, 0,0, // vertex 0
-    radius,0,0, // vertex 1
-    0,radius,0, // vertex 2
-  };
-
-  static const GLfloat color_buffer_data [] = {
-    1,1,1, // color 0
-    1,1,1, // color 1
-    1,1,1, // color 2
-  };
-
-  // create3DObject creates and returns a handle to a VAO that can be used later
-  triangle = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data, color_buffer_data, GL_FILL);
-}
-
-void makeTriangle(glm::mat4 VP) {
-  // Send our transformation to the currently bound shader, in the "MVP" uniform
-  // For each model you render, since the MVP will be different (at least the M part)
-  //  Don't change unless you are sure!!
-  glm::mat4 MVP;	// MVP = Projection * View * Model
-
-  // Load identity to model matrix
-  // Contains all the transforms of the objects
-  Matrices.model = glm::mat4(1.0f);
-
-  /* Render your scene */
-
-  glm::mat4 translateTriangle = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
-  glm::mat4 rotateTriangle = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(1,0,0));  // rotate about vector (0,0,1) Rotating about z-axis
-  glm::mat4 triangleTransform = translateTriangle * rotateTriangle;
-  Matrices.model *= triangleTransform;
-  // MVP : model view projection
-  MVP = VP * Matrices.model; // MVP = p * V * M
-
-  //  Don't change unless you are sure!!
-  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-  // draw3DObject draws the VAO given to it using current MVP matrix
-  draw3DObject(triangle);
-}
-
-void makeCircle(glm::mat4 VP, float x = -3.5f, float y = -3.5f) {
-  glm::mat4 MVP;
-  for(int i=0; i<720; i++) {
-  Matrices.model = glm::mat4(1.0f);
-  glm::mat4 scaleTriangle = glm::mat4(1.0f);
-  float rotAngle = (float)(i * M_PI/360);
-  glm::mat4 translateTriangle = glm::translate (glm::vec3(x, y, 0.0f)); // glTranslatef
-  glm::mat4 rotateTriangle = glm::rotate(rotAngle, glm::vec3(0,0,1));  // rotate about vector (0,0,1) Rotating about z-axis
-  Matrices.model *= (translateTriangle * rotateTriangle);// * scaleTriangle);
-  MVP = VP * Matrices.model; // MVP = p * V * M
-  glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-  draw3DObject(triangle);
-  }
-}
-/* Render the scene with openGL */
 /* Edit this function according to your assignment */
 void draw () {
   // clear the color and depth in the frame buffer
@@ -417,10 +277,10 @@ void draw () {
   glm::mat4 VP = Matrices.projection * Matrices.view;
 
   //makeTriangle(VP);
-  makeCircle(VP, circle_center_x, circle_center_y);
+  //makeCircle(VP, circle_center_x, circle_center_y);
   // Increment angles
   float increments = 0;
-
+  bird.createBird(VP);
   //camera_rotation_angle++; // Simulating camera rotation
   triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
 }
@@ -477,7 +337,8 @@ GLFWwindow* initGLFW (int width, int height) {
 void initGL (GLFWwindow* window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
 	// Create the models
-	createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
+  bird.initialize();
+	//createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
 	// Get a handle for our "MVP" uniform
@@ -511,6 +372,7 @@ int main (int argc, char** argv)
     double last_update_time = glfwGetTime(), current_time;
     double total_time_elapsed = 0;
     /* Draw in loop */
+
     while (!glfwWindowShouldClose(window)) {
 
         // OpenGL Draw commands
@@ -521,16 +383,13 @@ int main (int argc, char** argv)
 
         // Poll for Keyboard and mouse events
         glfwPollEvents();
-
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
         if ((current_time - last_update_time) >= 0.2) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.05;
-            moveCircle(0.1 * (circle_u_velocity * cos(circle_projection_angle)),
-              0.1 * ((circle_u_velocity * sin(circle_projection_angle))- 0.2 * total_time_elapsed));
-
+            bird.flyBird();
         }
     }
 
