@@ -160,23 +160,21 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
      // Function is called first on GLFW_PRESS.
     if (action == GLFW_RELEASE) {
         switch (key) {
-            case GLFW_KEY_C: // Shift + c or c
-                rectangle_rot_status = !rectangle_rot_status;
-                break;
-            case GLFW_KEY_P:
-                triangle_rot_status = !triangle_rot_status;
-                break;
-            case GLFW_KEY_X:
-                break;
             case GLFW_KEY_UP:
                 bird.increase_velocity();
                 break;
             case GLFW_KEY_DOWN:
                 bird.decrease_velocity();
                 break;
-            case GLFW_KEY_SPACE:
-                bird.set_fly_status();
-                break;
+						case GLFW_KEY_LEFT:
+		            bird.decrease_angle();
+		            break;
+						case GLFW_KEY_RIGHT:
+								bird.increase_angle();
+								break;
+						case GLFW_KEY_SPACE:
+		            bird.set_fly_status();
+		            break;
             default:
                 break;
         }
@@ -374,22 +372,20 @@ int main (int argc, char** argv)
     /* Draw in loop */
 
     while (!glfwWindowShouldClose(window)) {
-
         // OpenGL Draw commands
         draw();
-
         // Swap Frame Buffer in double buffering
         glfwSwapBuffers(window);
-
         // Poll for Keyboard and mouse events
         glfwPollEvents();
+
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.2) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.05) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
             last_update_time = current_time;
-            total_time_elapsed += 0.05;
-            bird.flyBird();
+            total_time_elapsed += 0.01;
+						bird.flyBird();
         }
     }
 
