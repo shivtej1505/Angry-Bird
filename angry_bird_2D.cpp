@@ -209,12 +209,25 @@ float camera_rotation_angle = 90;
 float triangle_rotation = 0;
 float circle_center_x = -3.5;
 float circle_center_y = -3.5;
-float circle_u_cos_theta = 0.2f;
-float circle_u_sin_theta = 0.2f;
+float circle_u_velocity = 4.0f;   // Initial velocity of bird
+float circle_projection_angle = 45.0f * (M_PI/180.0f); // Initial projection angle
+int circle_can_move = 0;
 
 void moveCircle(float xDiff, float yDiff) {
-  circle_center_x += xDiff;
-  circle_center_y += yDiff;
+  if (circle_can_move) {
+    circle_center_y += yDiff;
+    circle_center_x += xDiff;
+  }
+}
+void increasePower() {
+  circle_u_velocity += 0.5;
+  printf("%f\n",sin(circle_projection_angle) );
+  printf("%f\n",cos(circle_projection_angle) );
+  printf("%f\n",circle_u_velocity );
+}
+void decreasePower() {
+  circle_u_velocity -= 0.5;
+  printf("%f\n",circle_u_velocity );
 }
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -230,6 +243,15 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
                 triangle_rot_status = !triangle_rot_status;
                 break;
             case GLFW_KEY_X:
+                break;
+            case GLFW_KEY_UP:
+                increasePower();
+                break;
+            case GLFW_KEY_DOWN:
+                decreasePower();
+                break;
+            case GLFW_KEY_SPACE:
+                circle_can_move = 1;
                 break;
             default:
                 break;
@@ -308,14 +330,14 @@ void reshapeWindow (GLFWwindow* window, int width, int height) {
 VAO *triangle, *rectangle;
 
 // Creates the triangle object used in this sample code
-void createTriangle () {
+void createTriangle (float radius = 1.0f) {
   /* ONLY vertices between the bounds specified in glm::ortho will be visible on screen */
 
   /* Define vertex array as used in glBegin (GL_TRIANGLES) */
   static const GLfloat vertex_buffer_data [] = {
     0, 0,0, // vertex 0
-    0.1,0,0, // vertex 1
-    0,0.1,0, // vertex 2
+    radius,0,0, // vertex 1
+    0,radius,0, // vertex 2
   };
 
   static const GLfloat color_buffer_data [] = {
@@ -358,10 +380,11 @@ void makeCircle(glm::mat4 VP, float x = -3.5f, float y = -3.5f) {
   glm::mat4 MVP;
   for(int i=0; i<720; i++) {
   Matrices.model = glm::mat4(1.0f);
+  glm::mat4 scaleTriangle = glm::mat4(1.0f);
   float rotAngle = (float)(i * M_PI/360);
   glm::mat4 translateTriangle = glm::translate (glm::vec3(x, y, 0.0f)); // glTranslatef
   glm::mat4 rotateTriangle = glm::rotate(rotAngle, glm::vec3(0,0,1));  // rotate about vector (0,0,1) Rotating about z-axis
-  Matrices.model *= (translateTriangle * rotateTriangle);
+  Matrices.model *= (translateTriangle * rotateTriangle);// * scaleTriangle);
   MVP = VP * Matrices.model; // MVP = p * V * M
   glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
   draw3DObject(triangle);
@@ -454,7 +477,7 @@ GLFWwindow* initGLFW (int width, int height) {
 void initGL (GLFWwindow* window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
 	// Create the models
-	createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
+	createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
 	// Get a handle for our "MVP" uniform
@@ -501,11 +524,13 @@ int main (int argc, char** argv)
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.05) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.2) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.05;
-            moveCircle(0.5 * circle_u_cos_theta, 0.5 * ( circle_u_sin_theta - 0.2 * total_time_elapsed));
+            moveCircle(0.1 * (circle_u_velocity * cos(circle_projection_angle)),
+              0.1 * ((circle_u_velocity * sin(circle_projection_angle))- 0.2 * total_time_elapsed));
+
         }
     }
 
