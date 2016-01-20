@@ -3,6 +3,9 @@
 
 class Bird {
   private:
+  static const float VELOCITY_DIFF = 5.0f;
+  static const float ANGLE_DIFF = 5.0f;
+  static const float GRAVITY = 5.0f;
   Circle circle;
   float initial_velocity;
   float projection_angle;
@@ -20,9 +23,11 @@ class Bird {
     bird_center_y = -3.5f;
     fly_time = 0.0f;
   }
-  void initialize() {
+  void initialize(int x, int y) {
     printf("LOL\n");
-    circle.initialize(1,1, 0.1);
+    bird_center_x = x;
+    bird_center_y = y;
+    circle.initialize(bird_center_x, bird_center_y, 10);
   }
 
   void createBird(glm::mat4 VP) {
@@ -33,7 +38,7 @@ class Bird {
     if (bird_can_fly) {
       fly_time += 0.05;
       bird_center_x += (initial_velocity * cos(projection_angle));
-      bird_center_y += (initial_velocity * sin(projection_angle) - 0.1 * fly_time);
+      bird_center_y += (initial_velocity * sin(projection_angle) - GRAVITY * fly_time);
       //printf("%f\n", increase_velocity);
     }
   }
@@ -55,14 +60,14 @@ class Bird {
 
   void increase_velocity() {
     if (!bird_can_fly) {
-      initial_velocity += 0.08;
+      initial_velocity += VELOCITY_DIFF;
       printf("%f\n",initial_velocity );
     }
   }
 
   void decrease_velocity() {
     if (!bird_can_fly) {
-      initial_velocity -= 0.08;
+      initial_velocity -= VELOCITY_DIFF;
       printf("%f\n",initial_velocity );
     }
   }

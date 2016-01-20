@@ -4,23 +4,24 @@ class Cannon {
   private:
   Rectangle rectangle;
   float cannonAngle;
+  static const float ANGLE_DIFF = 5.0f;
   public:
   Cannon() {
     cannonAngle = 45.0f;
     printf("Cannon fired\n");
   }
   void initialize() {
-    rectangle.initialize(1,0.2);
+    rectangle.initialize(80, 30);
   }
   void createCannon(glm::mat4 VP) {
-    rectangle.makeRectangle(VP, -3.8, -3.8, cannonAngle);
+    rectangle.makeRectangle(VP, -380, -275, cannonAngle, 20, 15);
   }
 
   void decreaseAngle() {
-    cannonAngle -= 5.0;
+    cannonAngle -= ANGLE_DIFF;
   }
 
   void increaseAngle() {
-    cannonAngle += 5.0;
+    cannonAngle += ANGLE_DIFF;
   }
 };

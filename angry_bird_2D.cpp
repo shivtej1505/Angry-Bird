@@ -115,33 +115,14 @@ void quit(GLFWwindow *window) {
 /**************************
  * Customizable functions *
  **************************/
-
-float triangle_rot_dir = 1;
-float rectangle_rot_dir = 1;
-bool triangle_rot_status = true;
-bool rectangle_rot_status = true;
-
 float camera_rotation_angle = 90;
-float triangle_rotation = 0;
-float circle_center_x = -3.5;
-float circle_center_y = -3.5;
-float circle_u_velocity = 4.0f;   // Initial velocity of bird
-float circle_projection_angle = 45.0f * (M_PI/180.0f); // Initial projection angle
-int circle_can_move = 0;
-
-void moveCircle(float xDiff, float yDiff) {
-  if (circle_can_move) {
-    circle_center_y += yDiff;
-    circle_center_x += xDiff;
-  }
-}
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
 // mods --> which key has pressed, can be used to differentiate b/w Shift + c and c
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) {
      // Function is called first on GLFW_PRESS.
-    if (action == GLFW_RELEASE) {
+    if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
         switch (key) {
             case GLFW_KEY_UP:
                 bird.increase_velocity();
@@ -192,11 +173,11 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods) {
     switch (button) {
         case GLFW_MOUSE_BUTTON_LEFT:
             if (action == GLFW_RELEASE)
-                triangle_rot_dir *= -1;
+                //triangle_rot_dir *= -1;
             break;
         case GLFW_MOUSE_BUTTON_RIGHT:
             if (action == GLFW_RELEASE) {
-                rectangle_rot_dir *= 50; // also change the rotation speed
+                //rectangle_rot_dir *= 50; // also change the rotation speed
             }
             break;
         default:
@@ -230,7 +211,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height) {
     // third and fourth parameter : bound for y-axis
     // fifth parameter : how much near you can see
     // sixth parameter : how much futher you can see, objects after them won't be visible
-    Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
+    Matrices.projection = glm::ortho(-400.0f, 400.0f, -300.0f, 300.0f, 0.1f, 500.0f);
 }
 
 
@@ -266,7 +247,7 @@ void draw () {
   bird.createBird(VP);
 	cannon.createCannon(VP);
   //camera_rotation_angle++; // Simulating camera rotation
-  triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
+  //triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
@@ -284,7 +265,7 @@ GLFWwindow* initGLFW (int width, int height) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(width, height, "Sample OpenGL 3.3 Application", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Angry Bird", NULL, NULL);
 
     if (!window) {
         glfwTerminate();
@@ -321,7 +302,7 @@ GLFWwindow* initGLFW (int width, int height) {
 void initGL (GLFWwindow* window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
 	// Create the models
-  bird.initialize();
+  bird.initialize(-360, -260);
 	cannon.initialize();
 	//createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	// Create and compile our GLSL program from the shaders
@@ -347,8 +328,8 @@ void initGL (GLFWwindow* window, int width, int height) {
 
 int main (int argc, char** argv)
 {
-	int width = 1000;
-	int height = 1000;
+	int width = 800;
+	int height = 600;
 
     GLFWwindow* window = initGLFW(width, height);
 
@@ -368,7 +349,7 @@ int main (int argc, char** argv)
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.05) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.01) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.01;
