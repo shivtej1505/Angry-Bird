@@ -18,10 +18,12 @@
 
 using namespace std;
 vector <Bird> birds;
+int bird_number = 0;
 
 GLuint programID;
 Cannon cannon;
 Ground ground;
+bool tmp = true;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -108,13 +110,35 @@ void add_new_bird(int center_x, int center_y, bool is_on_cannon = false) {
 	if (is_on_cannon) {
 		bird.set_bird_on_cannon(true);
 	}
+	printf("%d\n",bird.get_bird_on_cannon() );
 	birds.push_back(bird);
 }
 
-void initialize_elements() {
+void next_bird() {
+	if (bird_number >= birds.size()) {
+		printf("No bird left\n" );
+		return;
+	}
+	if (!birds.at(bird_number).get_bird_on_cannon()) {
+		printf("next bird now!\n" );
+		bird_number++;
+		if (bird_number == birds.size()) {
+			printf("No bird left\n" );
+			return;
+		}
+		birds.at(bird_number).put_on_cannon();
+		birds.at(bird_number).set_bird_on_cannon(true);
+		for(int bird_num = bird_number+1; bird_num < birds.size(); bird_num++) {
+			(birds.at(bird_num)).move_forward();// Move forward in queue
+			printf("%d %d\n",bird_num, (birds.at(bird_num)).get_bird_on_cannon() );
+		}
+	}
+}
+void initialize_elements(int number_bird = 4) {
 	add_new_bird(-360, -260, true);
-	for (int i=0; i<4; i++) {
-		add_new_bird(-480 + (i*23), -280);
+	//int x_increment =
+	for (int i=0; i<number_bird; i++) {
+		add_new_bird(-408 - (i*23), -280);
 	}
 	cannon.initialize();
 	ground.initialize();
@@ -180,7 +204,17 @@ void fly_birds() {
 	}
 }
 
-
+void check_collision() {
+	// bird and ground
+	//Bird bird = birds.at(bird_number);
+	float bird_center_x = birds.at(bird_number).get_center_x();
+	float bird_center_y = birds.at(bird_number).get_center_y();
+	if (-295.0 <= bird_center_y && bird_center_y <= -285.0 && tmp) {
+		printf("Collison\n" );
+		birds.at(bird_number).collision(0.0f, 90.0f);
+		tmp = !tmp;
+	}
+}
 
 float camera_rotation_angle = 90;
 
@@ -413,7 +447,9 @@ int main (int argc, char** argv)
             // do something every 0.02 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.02;
+						check_collision();
 						fly_birds();
+						next_bird();
         }
     }
 
