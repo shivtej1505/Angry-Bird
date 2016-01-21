@@ -3,27 +3,31 @@
 
 class Bird {
   private:
-  static const float VELOCITY_DIFF = 5.0f;
+  static const float VELOCITY_DIFF = 2.0f;
   static const float ANGLE_DIFF = 5.0f;
-  static const float GRAVITY = 5.0f;
+  static const float GRAVITY = 9.8f;
   Circle circle;
   float initial_velocity;
   float projection_angle;
   float bird_center_x;
   float bird_center_y;
+  float bird_radius;
   double fly_time;
   bool bird_can_fly;
+  bool bird_on_cannon;
 
   int flag;
   public:
   Bird(int x, int y) {
     initial_velocity = 10.0f;
     projection_angle = 45.0f * (M_PI/180.0f);
-    bird_can_fly = true;
+    bird_can_fly = false;
+    bird_on_cannon = false;
     bird_center_x = x;
     bird_center_y = y;
+    bird_radius = 10;
     fly_time = 0.0f;
-    circle.initialize(bird_center_x, bird_center_y, 10, true);
+    circle.initialize(bird_center_x, bird_center_y, bird_radius, true);
   }
 
   /*private:
@@ -48,14 +52,12 @@ class Bird {
     circle.makeCircle(VP,bird_center_x ,bird_center_y);
   }
 
-  void flyBird() {
-    //if (bird_can_fly) {
-      fly_time += 0.05;
-      bird_center_x += 10;// (initial_velocity * cos(projection_angle));
-      bird_center_y += 10;//(initial_velocity * sin(projection_angle) - GRAVITY * fly_time);
-      //printf("%f\n", bird_center_x);
-      //printf("%f\n", bird_center_x);
-    //}
+  bool flyBird() {
+    if (bird_can_fly && !is_outside_screen()) {
+      fly_time += 0.02;
+      bird_center_x += (initial_velocity * cos(projection_angle));
+      bird_center_y += (initial_velocity * sin(projection_angle) - GRAVITY * fly_time);
+    }
   }
 
   void increase_angle() {
@@ -92,10 +94,33 @@ class Bird {
   }
 
   bool get_fly_status() {
-    return true;
+    return bird_can_fly;
   }
 
   void set_deb_flag(int num) {
     flag = num;
+  }
+
+  void set_bird_on_cannon(bool on_cannon) {
+    bird_on_cannon = on_cannon;
+  }
+
+  bool get_bird_on_cannon() {
+    return bird_on_cannon;
+  }
+
+  bool is_outside_screen() {
+    if (bird_center_x - bird_radius > MAX_X) {
+      return true;
+    } else if (bird_center_x + bird_radius  < MIN_X) {
+      return true;
+    } else if (bird_center_y - bird_radius  > MAX_Y &&
+        bird_center_x - bird_radius > MAX_X &&
+        bird_center_x + bird_radius  < MIN_X) {
+      return true;
+    } else if (bird_center_y + bird_radius  < MIN_Y) {
+      return true;
+    }
+    return false;
   }
 };

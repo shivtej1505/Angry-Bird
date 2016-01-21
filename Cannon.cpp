@@ -10,7 +10,7 @@ class Cannon {
   Cannon() {
     cannonAngle = 45.0f;
   }
-  
+
   void initialize() {
     cannon_pipe.initialize(80, 30);
     cannon_stand.initialize(-360, -260, 32, false);

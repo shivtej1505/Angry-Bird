@@ -11,6 +11,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include "game_config.h"
 #include "Bird.cpp"
 #include "Cannon.cpp"
 #include "Ground.cpp"
@@ -102,8 +103,19 @@ static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
 }
 
+void add_new_bird(int center_x, int center_y, bool is_on_cannon = false) {
+	Bird bird(center_x, center_y);
+	if (is_on_cannon) {
+		bird.set_bird_on_cannon(true);
+	}
+	birds.push_back(bird);
+}
+
 void initialize_elements() {
-	//bird.initialize(10,10);
+	add_new_bird(-360, -260, true);
+	for (int i=0; i<4; i++) {
+		add_new_bird(-480 + (i*23), -280);
+	}
 	cannon.initialize();
 	ground.initialize();
 }
@@ -115,9 +127,10 @@ void quit(GLFWwindow *window) {
 }
 
 void set_fly_status_birds() {
-	for(int bird_num = 0; bird_num < birds.size(); bird_num++) {
-		Bird bird = birds[bird_num];
-		bird.set_fly_status();
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		if ((*bird).get_bird_on_cannon()) // Is it fine here
+			(*bird).set_fly_status();
 	}
 }
 
@@ -131,28 +144,32 @@ void create_birds(glm::mat4 VP) {
 void decrease_velocity_birds() {
 	vector<Bird>::iterator bird;
 	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		(*bird).decrease_velocity();
+		if ((*bird).get_bird_on_cannon())
+			(*bird).decrease_velocity();
 	}
 }
 
 void increase_velocity_birds() {
 	vector<Bird>::iterator bird;
 	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		(*bird).increase_velocity();
+		if ((*bird).get_bird_on_cannon())
+			(*bird).increase_velocity();
 	}
 }
 
 void decrease_angle_birds() {
 	vector<Bird>::iterator bird;
 	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		(*bird).decrease_angle();
+		if ((*bird).get_bird_on_cannon())
+			(*bird).decrease_angle();
 	}
 }
 
 void increase_angle_birds() {
 	vector<Bird>::iterator bird;
 	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		(*bird).increase_angle();
+		if ((*bird).get_bird_on_cannon())
+			(*bird).increase_angle();
 	}
 }
 
@@ -163,10 +180,7 @@ void fly_birds() {
 	}
 }
 
-void add_new_bird(int center_x, int center_y) {
-	Bird bird(center_x, center_y);
-	birds.push_back(bird);
-}
+
 
 float camera_rotation_angle = 90;
 
@@ -192,7 +206,6 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
 								cannon.decreaseAngle();
 		            break;
 						case GLFW_KEY_R:
-								printf("R clicked\n" );
 								set_fly_status_birds();
 		            break;
 						case GLFW_KEY_SPACE:
@@ -269,7 +282,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height) {
     // third and fourth parameter : bound for y-axis
     // fifth parameter : how much near you can see
     // sixth parameter : how much futher you can see, objects after them won't be visible
-    Matrices.projection = glm::ortho(-400.0f, 400.0f, -300.0f, 300.0f, 0.1f, 500.0f);
+    Matrices.projection = glm::ortho(-500.0f, 500.0f, -300.0f, 300.0f, 0.1f, 500.0f);
 }
 
 
@@ -353,11 +366,9 @@ GLFWwindow* initGLFW (int width, int height) {
 /* Initialize the OpenGL rendering properties */
 /* Add all the models to be created here */
 void initGL (GLFWwindow* window, int width, int height) {
-    /* Objects should be created before any other gl function and shaders */
-	// Create the models
+  /* Objects should be created before any other gl function and shaders */
 
 
-	//createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
 	// Get a handle for our "MVP" uniform
@@ -381,15 +392,9 @@ void initGL (GLFWwindow* window, int width, int height) {
 
 int main (int argc, char** argv)
 {
-	int width = 800;
-	int height = 600;
+    GLFWwindow* window = initGLFW(WIDTH, HEIGHT);
+	  initGL (window, WIDTH, HEIGHT);
 
-    GLFWwindow* window = initGLFW(width, height);
-	  initGL (window, width, height);
-
-		for (int i=0; i<5; i++) {
-			add_new_bird(-360, -260);
-		}
 		initialize_elements();
     double last_update_time = glfwGetTime(), current_time;
     double total_time_elapsed = 0;
@@ -404,11 +409,10 @@ int main (int argc, char** argv)
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.2) { // atleast 0.5s elapsed since last frame
-            // do something every 0.5 seconds ..
+        if ((current_time - last_update_time) >= 0.02) { // atleast 0.5s elapsed since last frame
+            // do something every 0.02 seconds ..
             last_update_time = current_time;
-            total_time_elapsed += 0.01;
-						//bird.flyBird();
+            total_time_elapsed += 0.02;
 						fly_birds();
         }
     }
