@@ -2,19 +2,22 @@
 
 class Cannon {
   private:
-  Rectangle rectangle;
+  Rectangle cannon_pipe;
+  Circle cannon_stand;
   float cannonAngle;
   static const float ANGLE_DIFF = 5.0f;
   public:
   Cannon() {
     cannonAngle = 45.0f;
-    printf("Cannon fired\n");
   }
+  
   void initialize() {
-    rectangle.initialize(80, 30);
+    cannon_pipe.initialize(80, 30);
+    cannon_stand.initialize(-360, -260, 32, false);
   }
   void createCannon(glm::mat4 VP) {
-    rectangle.makeRectangle(VP, -380, -275, cannonAngle, 20, 15);
+    cannon_pipe.makeRectangle(VP, -380, -275, cannonAngle, 20, 15);
+    cannon_stand.makeCircle(VP, -360, -260);
   }
 
   void decreaseAngle() {

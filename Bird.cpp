@@ -14,36 +14,51 @@ class Bird {
   double fly_time;
   bool bird_can_fly;
 
+  int flag;
   public:
-  Bird() {
-    initial_velocity = 0.0f;
+  Bird(int x, int y) {
+    initial_velocity = 10.0f;
     projection_angle = 45.0f * (M_PI/180.0f);
-    bird_can_fly = false;
-    bird_center_x = -3.5f;
-    bird_center_y = -3.5f;
-    fly_time = 0.0f;
-  }
-  void initialize(int x, int y) {
-    printf("LOL\n");
+    bird_can_fly = true;
     bird_center_x = x;
     bird_center_y = y;
-    circle.initialize(bird_center_x, bird_center_y, 10);
+    fly_time = 0.0f;
+    circle.initialize(bird_center_x, bird_center_y, 10, true);
   }
+
+  /*private:
+  void initialize(int x, int y) {
+    bird_center_x = x;
+    bird_center_y = y;
+    circle.initialize(bird_center_x, bird_center_y, 10, true);
+    printf("Initialized\n");
+  }*/
+
+  public:
+  void print(int n) {
+    printf("I'm bird no %d\n",n );
+    printf("Deb Flag%d\n",flag );
+    printf("%d\n",bird_can_fly );
+    printf("%f\n",bird_center_x );
+    printf("%f\n",bird_center_y );
+  }
+
 
   void createBird(glm::mat4 VP) {
     circle.makeCircle(VP,bird_center_x ,bird_center_y);
   }
 
   void flyBird() {
-    if (bird_can_fly) {
+    //if (bird_can_fly) {
       fly_time += 0.05;
-      bird_center_x += (initial_velocity * cos(projection_angle));
-      bird_center_y += (initial_velocity * sin(projection_angle) - GRAVITY * fly_time);
-      //printf("%f\n", increase_velocity);
-    }
+      bird_center_x += 10;// (initial_velocity * cos(projection_angle));
+      bird_center_y += 10;//(initial_velocity * sin(projection_angle) - GRAVITY * fly_time);
+      //printf("%f\n", bird_center_x);
+      //printf("%f\n", bird_center_x);
+    //}
   }
 
-  void increaseAngle() {
+  void increase_angle() {
     if (!bird_can_fly) {
       projection_angle += 5 * (M_PI/180.0f);
       printf("%f\n",sin(projection_angle) );
@@ -51,7 +66,7 @@ class Bird {
     }
   }
 
-  void decreaseAngle() {
+  void decrease_angle() {
     if (!bird_can_fly) {
       projection_angle -= 5 * (M_PI/180.0f);
       printf("%f\n",projection_angle * (180.0f/M_PI));
@@ -74,5 +89,13 @@ class Bird {
 
   void set_fly_status() {
     bird_can_fly = !bird_can_fly;
+  }
+
+  bool get_fly_status() {
+    return true;
+  }
+
+  void set_deb_flag(int num) {
+    flag = num;
   }
 };

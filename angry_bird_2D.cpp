@@ -9,15 +9,18 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include "Bird.cpp"
 #include "Cannon.cpp"
+#include "Ground.cpp"
 
 using namespace std;
+vector <Bird> birds;
 
 GLuint programID;
-Bird bird;
 Cannon cannon;
+Ground ground;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -99,22 +102,72 @@ static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
 }
 
+void initialize_elements() {
+	//bird.initialize(10,10);
+	cannon.initialize();
+	ground.initialize();
+}
+
 void quit(GLFWwindow *window) {
     glfwDestroyWindow(window);
     glfwTerminate();
     exit(EXIT_SUCCESS);
 }
 
+void set_fly_status_birds() {
+	for(int bird_num = 0; bird_num < birds.size(); bird_num++) {
+		Bird bird = birds[bird_num];
+		bird.set_fly_status();
+	}
+}
 
-/* Generate VAO, VBOs and return VAO handle */
+void create_birds(glm::mat4 VP) {
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		(*bird).createBird(VP);
+	}
+}
 
+void decrease_velocity_birds() {
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		(*bird).decrease_velocity();
+	}
+}
 
-/* Render the VBOs handled by VAO */
+void increase_velocity_birds() {
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		(*bird).increase_velocity();
+	}
+}
 
+void decrease_angle_birds() {
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		(*bird).decrease_angle();
+	}
+}
 
-/**************************
- * Customizable functions *
- **************************/
+void increase_angle_birds() {
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		(*bird).increase_angle();
+	}
+}
+
+void fly_birds() {
+	vector<Bird>::iterator bird;
+	for(bird = birds.begin(); bird != birds.end(); bird++) {
+		(*bird).flyBird();
+	}
+}
+
+void add_new_bird(int center_x, int center_y) {
+	Bird bird(center_x, center_y);
+	birds.push_back(bird);
+}
+
 float camera_rotation_angle = 90;
 
 /* Executed when a regular key is pressed/released/held-down */
@@ -124,22 +177,27 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
      // Function is called first on GLFW_PRESS.
     if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
         switch (key) {
-            case GLFW_KEY_UP:
-                bird.increase_velocity();
+            case GLFW_KEY_F:
+                increase_velocity_birds();
                 break;
-            case GLFW_KEY_DOWN:
-                bird.decrease_velocity();
+            case GLFW_KEY_S:
+                decrease_velocity_birds();
                 break;
-						case GLFW_KEY_LEFT:
-		            bird.decreaseAngle();
-								cannon.decreaseAngle();
-		            break;
-						case GLFW_KEY_RIGHT:
-								bird.increaseAngle();
+						case GLFW_KEY_A:
+								increase_angle_birds();
 								cannon.increaseAngle();
 								break;
+						case GLFW_KEY_B:
+								decrease_angle_birds();
+								cannon.decreaseAngle();
+		            break;
+						case GLFW_KEY_R:
+								printf("R clicked\n" );
+								set_fly_status_birds();
+		            break;
 						case GLFW_KEY_SPACE:
-		            bird.set_fly_status();
+						// Pause the game
+		            //bird.set_fly_status();
 		            break;
             default:
                 break;
@@ -240,14 +298,9 @@ void draw () {
   //  Don't change unless you are sure!!
   glm::mat4 VP = Matrices.projection * Matrices.view;
 
-  //makeTriangle(VP);
-  //makeCircle(VP, circle_center_x, circle_center_y);
-  // Increment angles
-  float increments = 0;
-  bird.createBird(VP);
+  create_birds(VP);
 	cannon.createCannon(VP);
-  //camera_rotation_angle++; // Simulating camera rotation
-  //triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
+	ground.createGround(VP);
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
@@ -302,8 +355,8 @@ GLFWwindow* initGLFW (int width, int height) {
 void initGL (GLFWwindow* window, int width, int height) {
     /* Objects should be created before any other gl function and shaders */
 	// Create the models
-  bird.initialize(-360, -260);
-	cannon.initialize();
+
+
 	//createTriangle (0.4); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
@@ -332,13 +385,15 @@ int main (int argc, char** argv)
 	int height = 600;
 
     GLFWwindow* window = initGLFW(width, height);
-
 	  initGL (window, width, height);
 
+		for (int i=0; i<5; i++) {
+			add_new_bird(-360, -260);
+		}
+		initialize_elements();
     double last_update_time = glfwGetTime(), current_time;
     double total_time_elapsed = 0;
     /* Draw in loop */
-
     while (!glfwWindowShouldClose(window)) {
         // OpenGL Draw commands
         draw();
@@ -349,11 +404,12 @@ int main (int argc, char** argv)
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.01) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.2) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.01;
-						bird.flyBird();
+						//bird.flyBird();
+						fly_birds();
         }
     }
 
