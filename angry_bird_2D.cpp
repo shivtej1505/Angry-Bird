@@ -114,6 +114,11 @@ void add_new_bird(int center_x, int center_y, bool is_on_cannon = false) {
 	birds.push_back(bird);
 }
 
+// reset cannon and bird velocity and angle
+void reset() {
+	birds.at(bird_number).print(bird_number);
+	cannon.reset();
+}
 void next_bird() {
 	if (bird_number >= birds.size()) {
 		printf("No bird left\n" );
@@ -132,6 +137,7 @@ void next_bird() {
 			(birds.at(bird_num)).move_forward();// Move forward in queue
 			printf("%d %d\n",bird_num, (birds.at(bird_num)).get_bird_on_cannon() );
 		}
+		reset();
 	}
 }
 void initialize_elements(int number_bird = 4) {
@@ -151,11 +157,8 @@ void quit(GLFWwindow *window) {
 }
 
 void set_fly_status_birds() {
-	vector<Bird>::iterator bird;
-	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		if ((*bird).get_bird_on_cannon()) // Is it fine here
-			(*bird).set_fly_status();
-	}
+	birds.at(bird_number).set_fly_status();
+	return;
 }
 
 void create_birds(glm::mat4 VP) {
@@ -166,42 +169,28 @@ void create_birds(glm::mat4 VP) {
 }
 
 void decrease_velocity_birds() {
-	vector<Bird>::iterator bird;
-	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		if ((*bird).get_bird_on_cannon())
-			(*bird).decrease_velocity();
-	}
+	birds.at(bird_number).decrease_angle();
+	return;
 }
 
 void increase_velocity_birds() {
-	vector<Bird>::iterator bird;
-	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		if ((*bird).get_bird_on_cannon())
-			(*bird).increase_velocity();
-	}
+	birds.at(bird_number).increase_velocity();
+	return;
 }
 
 void decrease_angle_birds() {
-	vector<Bird>::iterator bird;
-	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		if ((*bird).get_bird_on_cannon())
-			(*bird).decrease_angle();
-	}
+	birds.at(bird_number).decrease_angle();
+	return;
 }
 
 void increase_angle_birds() {
-	vector<Bird>::iterator bird;
-	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		if ((*bird).get_bird_on_cannon())
-			(*bird).increase_angle();
-	}
+	birds.at(bird_number).increase_angle();
+	return;
 }
 
 void fly_birds() {
-	vector<Bird>::iterator bird;
-	for(bird = birds.begin(); bird != birds.end(); bird++) {
-		(*bird).flyBird();
-	}
+	birds.at(bird_number).flyBird();
+	return;
 }
 
 void check_collision() {

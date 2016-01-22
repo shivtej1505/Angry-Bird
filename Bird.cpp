@@ -45,10 +45,11 @@ class Bird {
   public:
   void print(int n) {
     printf("I'm bird no %d\n",n );
-    printf("Deb Flag%d\n",flag );
+    //printf("Deb Flag%d\n",flag );
     printf("%d\n",bird_can_fly );
     printf("%f\n",bird_center_x );
     printf("%f\n",bird_center_y );
+    printf("%f\n",projection_angle * (180.0f/M_PI));
   }
 
 
@@ -59,33 +60,34 @@ class Bird {
   bool flyBird() {
     if (bird_can_fly && !is_outside_screen()) {
       fly_time += 0.02;
+      set_velocities(fly_time);
       bird_center_x += velocity_x;
-      bird_center_y += velocity_y - (GRAVITY * fly_time) );
+      bird_center_y += (velocity_y - (GRAVITY * fly_time));
     } else if (is_outside_screen()) {
       bird_on_cannon = false;
     }
   }
 
-  void set_velocity_y(float fly_time) {
+  void set_velocities(float fly_time) {
+    velocity_x = ( initial_velocity * cos(projection_angle) );
     //velocity_y = (increase_velocity * sin(projection_angle) - (GRAVITY * fly_time));
   }
   void increase_angle() {
-    if (!bird_can_fly) {
+    if (!bird_can_fly || bird_on_cannon) {
       projection_angle += 5 * (M_PI/180.0f);
-      printf("%f\n",sin(projection_angle) );
       printf("%f\n",projection_angle * (180.0f/M_PI));
     }
   }
 
   void decrease_angle() {
-    if (!bird_can_fly) {
+    if (!bird_can_fly || bird_on_cannon) {
       projection_angle -= 5 * (M_PI/180.0f);
       printf("%f\n",projection_angle * (180.0f/M_PI));
     }
   }
 
   void increase_velocity() {
-    if (!bird_can_fly) {
+    if (!bird_can_fly || bird_on_cannon ) {
       velocity_x += VELOCITY_DIFF * cos(projection_angle);
       velocity_y += VELOCITY_DIFF * sin(projection_angle);
       //initial_velocity += VELOCITY_DIFF;
@@ -94,7 +96,7 @@ class Bird {
   }
 
   void decrease_velocity() {
-    if (!bird_can_fly) {
+    if (!bird_can_fly || bird_on_cannon ) {
       velocity_x -= VELOCITY_DIFF * cos(projection_angle);
       velocity_y -= VELOCITY_DIFF * sin(projection_angle);
       //initial_velocity -= VELOCITY_DIFF;
@@ -104,6 +106,7 @@ class Bird {
 
   void set_fly_status() {
     bird_can_fly = !bird_can_fly;
+
   }
 
   bool get_fly_status() {
@@ -125,6 +128,7 @@ class Bird {
   void put_on_cannon() {
     bird_center_x = -360;
     bird_center_y = -260;
+    printf("%f\n",projection_angle * (180.0f/M_PI));
   }
 
   void move_forward() {

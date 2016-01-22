@@ -22,9 +22,15 @@ class Cannon {
 
   void decreaseAngle() {
     cannonAngle -= ANGLE_DIFF;
+    printf("Cannon%f\n",cannonAngle);
   }
 
   void increaseAngle() {
     cannonAngle += ANGLE_DIFF;
+    printf("Cannon%f\n",cannonAngle);
+  }
+
+  void reset() {
+    cannonAngle = 45.0f;
   }
 };
