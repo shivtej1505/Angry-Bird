@@ -6,6 +6,7 @@ class Bird {
   static const float VELOCITY_DIFF = 2.0f;
   static const float ANGLE_DIFF = 5.0f;
   static const float GRAVITY = 9.8f;
+  static const float COFFICENT_OF_FRICTION = 0.3f;
   Circle circle;
   float initial_velocity;
   float velocity_x;
@@ -40,6 +41,9 @@ class Bird {
   void change_velcities() {
     velocity_x = velocity_x;
     velocity_y = velocity_y - (GRAVITY * 0.02);
+    if (colliding_with_ground) {
+      velocity_x -= (COFFICENT_OF_FRICTION * 3);
+    }
   }
   void set_velocities() {
     velocity_x = initial_velocity * cos(projection_angle);
@@ -67,7 +71,7 @@ class Bird {
   }
 
   bool flyBird() {
-    printf("Pro%f\n",projection_angle * (180.0f/M_PI));
+    //printf("Pro%f\n",projection_angle * (180.0f/M_PI));
     if (bird_can_fly && !is_outside_screen()) {
       fly_time += 0.02;
       change_velcities();
@@ -108,10 +112,10 @@ class Bird {
   }
 
   void set_fly_status(bool value) {
-    bird_can_fly = value;
-    if (bird_can_fly) {
+    if (!bird_can_fly && value) {
       set_velocities();
     }
+    bird_can_fly = value;
   }
 
   bool get_fly_status() {
@@ -152,7 +156,8 @@ class Bird {
   void collision(float collision_angle,float cor = 1.0f) {
     if (collision_angle == 0.0) {
       // bird collided with a wall perpendicular to x-axis
-      velocity_x = -velocity_x;
+      printf("Collison with obstacle\n" );
+      velocity_x = -(cor * velocity_x);
     } else if (collision_angle == 90.0) {
       // ball collided with ground
       printf("Collison with ground\n" );

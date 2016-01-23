@@ -15,6 +15,8 @@
 #include "Bird.cpp"
 #include "Cannon.cpp"
 #include "Ground.cpp"
+#include "Pig.cpp"
+#include "Obstacle.cpp"
 
 using namespace std;
 vector <Bird> birds;
@@ -23,7 +25,9 @@ int bird_number = 0;
 GLuint programID;
 Cannon cannon;
 Ground ground;
-bool tmp = true;
+
+vector<Pig> pigs;
+vector<Obstacle> obstacles;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -114,11 +118,17 @@ void add_new_bird(int center_x, int center_y, bool is_on_cannon = false) {
 	birds.push_back(bird);
 }
 
-// reset cannon and bird velocity and angle
-void reset() {
-	birds.at(bird_number).print(bird_number);
-	cannon.reset();
+void add_new_pig(int center_x, int center_y, bool fill = true) {
+	Pig pig(center_x, center_y, 50,50, fill);
+	pigs.push_back(pig);
 }
+
+void add_new_obstacle(int center_x, int center_y, bool fill = true) {
+	Obstacle obstacle(center_x, center_y, 5, 100, fill);
+	obstacles.push_back(obstacle);
+}
+
+
 void next_bird() {
 	if (bird_number >= birds.size()) {
 		printf("No bird left\n" );
@@ -137,10 +147,18 @@ void next_bird() {
 			(birds.at(bird_num)).move_forward();// Move forward in queue
 			printf("%d %d\n",bird_num, (birds.at(bird_num)).get_bird_on_cannon() );
 		}
-		reset();
+		//reset();
 	}
 }
-void initialize_elements(int number_bird = 4) {
+
+// reset cannon and bird velocity and angle
+void reset() {
+	//birds.at(bird_number).print(bird_number);
+	cannon.reset();
+	next_bird();
+}
+
+void initialize_elements(int number_bird = 8) {
 	add_new_bird(-360, -260, true);
 	//int x_increment =
 	for (int i=0; i<number_bird; i++) {
@@ -148,6 +166,16 @@ void initialize_elements(int number_bird = 4) {
 	}
 	cannon.initialize();
 	ground.initialize();
+	for (int i=0; i<2; i++) {
+		if(i&1) {
+			add_new_pig(100 , -100);
+		} else {
+			add_new_pig(100 , 100);
+		}
+	}
+	for (int i=0; i<3; i++) {
+		add_new_obstacle(rand()%700 - 200, rand()%1000 + 100);
+	}
 }
 
 void quit(GLFWwindow *window) {
@@ -156,8 +184,23 @@ void quit(GLFWwindow *window) {
     exit(EXIT_SUCCESS);
 }
 
+void create_pigs(glm::mat4 VP) {
+	vector<Pig>::iterator pig;
+	for(pig = pigs.begin(); pig != pigs.end(); pig++) {
+		(*pig).createPig(VP);
+	}
+}
+
+void create_obstacles(glm::mat4 VP) {
+	vector<Obstacle>::iterator obstacle;
+	for(obstacle = obstacles.begin(); obstacle != obstacles.end(); obstacle++) {
+		(*obstacle).createObstacle(VP);
+	}
+}
+
 void set_fly_status_birds(bool value) {
 	birds.at(bird_number).set_fly_status(value);
+	reset();
 }
 
 void create_birds(glm::mat4 VP) {
@@ -187,6 +230,13 @@ void fly_birds() {
 	birds.at(bird_number).flyBird();
 }
 
+void drop_obstacles() {
+	vector<Obstacle>::iterator obstacle;
+	for(obstacle = obstacles.begin(); obstacle != obstacles.end(); obstacle++) {
+		(*obstacle).dropObstacle();
+	}
+}
+
 void check_collision() {
 	// bird and ground
 	//Bird bird = birds.at(bird_number);
@@ -194,11 +244,50 @@ void check_collision() {
 	float bird_center_y = birds.at(bird_number).get_center_y();
 	if (-295.0 <= bird_center_y && bird_center_y <= -285.0 &&
 			!birds.at(bird_number).colliding_with_ground) {
-		printf("Collison\n" );
+		printf("Collison with ground\n" );
 		birds.at(bird_number).collision(90.0f, 0.8f);
 		birds.at(bird_number).colliding_with_ground = true;
 	} else {
 		birds.at(bird_number).colliding_with_ground = false;
+	}
+	vector<Pig>::iterator pig;
+	for(pig = pigs.begin(); pig != pigs.end(); pig++) {
+		bool collidingWithAorC = (*pig).isCollidingFromSideA(bird_center_x,
+			bird_center_y) || (*pig).isCollidingFromSideC(bird_center_x, bird_center_y);
+		bool collidingWithBorD = (*pig).isCollidingFromSideB(bird_center_x,
+			bird_center_y) || (*pig).isCollidingFromSideD(bird_center_x, bird_center_y);
+		//printf("Dis %f\n", dis );
+		if (!(*pig).isCollide ) {
+			if (collidingWithAorC) {
+				birds.at(bird_number).collision(0.0f, 0.8f);
+				(*pig).isCollide = true;
+			} else if (collidingWithBorD) {
+				birds.at(bird_number).collision(90.0f, 0.8f);
+				(*pig).isCollide = true;
+			}
+		} else {
+			(*pig).isCollide = false;
+		}
+	}
+
+	vector<Obstacle>::iterator obstacle;
+	for(obstacle = obstacles.begin(); obstacle != obstacles.end(); obstacle++) {
+		bool collidingWithAorC = (*obstacle).isCollidingFromSideA(bird_center_x,
+			bird_center_y) || (*obstacle).isCollidingFromSideC(bird_center_x, bird_center_y);
+		bool collidingWithBorD = (*obstacle).isCollidingFromSideB(bird_center_x,
+			bird_center_y) || (*obstacle).isCollidingFromSideD(bird_center_x, bird_center_y);
+		//printf("Dis %f\n", dis );
+		if (!(*obstacle).isCollide ) {
+			if (collidingWithAorC) {
+				birds.at(bird_number).collision(0.0f, 0.8f);
+				(*obstacle).isCollide = true;
+			} else if (collidingWithBorD) {
+				birds.at(bird_number).collision(90.0f, 0.8f);
+				(*obstacle).isCollide = true;
+			}
+		} else {
+			(*obstacle).isCollide = false;
+		}
 	}
 }
 
@@ -305,7 +394,6 @@ void reshapeWindow (GLFWwindow* window, int width, int height) {
     Matrices.projection = glm::ortho(-500.0f, 500.0f, -300.0f, 300.0f, 0.1f, 500.0f);
 }
 
-
 /* Edit this function according to your assignment */
 void draw () {
   // clear the color and depth in the frame buffer
@@ -331,6 +419,8 @@ void draw () {
   //  Don't change unless you are sure!!
   glm::mat4 VP = Matrices.projection * Matrices.view;
 
+	create_obstacles(VP);
+	create_pigs(VP);
   create_birds(VP);
 	cannon.createCannon(VP);
 	ground.createGround(VP);
@@ -417,6 +507,7 @@ int main (int argc, char** argv)
 
 		initialize_elements();
     double last_update_time = glfwGetTime(), current_time;
+		double last_update_time_1 = glfwGetTime(), current_time_1;
     double total_time_elapsed = 0;
     /* Draw in loop */
     while (!glfwWindowShouldClose(window)) {
@@ -435,8 +526,18 @@ int main (int argc, char** argv)
             total_time_elapsed += 0.02;
 						check_collision();
 						fly_birds();
-						next_bird();
+						drop_obstacles();
+						//next_bird();
         }
+				current_time_1 = glfwGetTime();
+				if ((current_time_1 - last_update_time_1) >= 5) {
+					// after each 5 sec add 5 new obstacles
+					last_update_time_1 = current_time_1;
+					for (int i=0; i<3; i++) {
+						add_new_obstacle(rand()%700 - 200, rand()%1000 + 1000);
+					}
+					printf("Added new obstacles\n" );
+				}
     }
 
     glfwTerminate();

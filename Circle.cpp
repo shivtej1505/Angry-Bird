@@ -40,10 +40,10 @@ class Circle {
   public:
   void makeCircle(glm::mat4 VP, float x = -3.5f, float y = -3.5f) {
     glm::mat4 MVP;
-    for(int i=0; i<720; i++) {
+    for(int i=0; i<360; i++) {
       Matrices.model = glm::mat4(1.0f);
       //glm::mat4 scaleTriangle = glm::mat4(1.0f);
-      float rotAngle = (float)(i * M_PI/360);
+      float rotAngle = (float)(i * M_PI/180);
 
       glm::mat4 translateTriangle = glm::translate (glm::vec3(x, y, 0.0f)); // glTranslatef
       glm::mat4 rotateTriangle = glm::rotate(rotAngle, glm::vec3(0,0,1));  // rotate about vector (0,0,1) Rotating about z-axis

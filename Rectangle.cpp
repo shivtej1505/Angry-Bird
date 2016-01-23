@@ -3,13 +3,13 @@
 #include "create_draw.h"
 
 class Rectangle {
-  VAO *triangle1, *triangle2;
+  VAO *rectangle;
   float length, breath;
   public:
-  void initialize(float l, float b) {
+  void initialize(float l, float b, bool fill = true) {
     length = l;
     breath = b;
-    createTriangle(length, breath);
+    createRectangle(length, breath, fill);
   }
 
   void makeRectangle(glm::mat4 VP, float x = 0.0f, float y = 0.0f, float angle = 0.0f, float rotX = 0, float rotY = 0) {
@@ -25,15 +25,19 @@ class Rectangle {
     Matrices.model *= (translateRectangle_2 * translateRectangle * rotateRectangle * translateRectangle_1   );// * scaleTriangle);
     MVP = VP * Matrices.model; // MVP = p * V * M
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(triangle1);
-    draw3DObject(triangle2);
+    //draw3DObject(triangle1);
+    draw3DObject(rectangle);
   }
 
   private:
-  void createTriangle (float l, float b) {
+  void createRectangle (float l, float b, bool fill) {
     const GLfloat vertex_buffer_data_1 [] = {
       0, 0, 0, // vertex 0
       l, 0, 0, // vertex 1
+      l, b, 0, // vertex 2
+
+      0, 0, 0, // vertex 0
+      0, b, 0, // vertex 1
       l, b, 0, // vertex 2
     };
 
@@ -41,10 +45,18 @@ class Rectangle {
       1,1,1, // color 0
       1,1,1, // color 1
       1,1,1, // color 2
+
+      1,1,1, // color 0
+      1,1,1, // color 1
+      1,1,1, // color 2
     };
 
     // create3DObject creates and returns a handle to a VAO that can be used later
-    triangle1 = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data_1, color_buffer_data_1, GL_FILL);
+    /*if (fill_upper){
+      triangle1 = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data_1, color_buffer_data_1, GL_FILL);
+    } else {
+      triangle1 = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data_1, color_buffer_data_1, GL_LINE);
+    }
     const GLfloat vertex_buffer_data_2 [] = {
       0, 0, 0, // vertex 0
       0, b, 0, // vertex 1
@@ -55,9 +67,13 @@ class Rectangle {
       1,1,1, // color 0
       1,1,1, // color 1
       1,1,1, // color 2
-    };
+    };*/
 
     // create3DObject creates and returns a handle to a VAO that can be used later
-    triangle2 = create3DObject(GL_TRIANGLES, 3, vertex_buffer_data_2, color_buffer_data_2, GL_FILL);
+    if (fill){
+      rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_1, color_buffer_data_1, GL_FILL);
+    } else {
+      rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_1, color_buffer_data_1, GL_LINE);
+    }
   }
 };
