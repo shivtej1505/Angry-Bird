@@ -18,15 +18,17 @@ class Bird {
   bool bird_can_fly;
   bool bird_on_cannon;
 
+  public:
+  bool colliding_with_ground;
+
   int flag;
   public:
   Bird(int x, int y) {
     initial_velocity = 10.0f;
     projection_angle = 45.0f * (M_PI/180.0f);
-    velocity_x = (initial_velocity * cos(projection_angle));
-    velocity_y = (initial_velocity * sin(projection_angle));
     bird_can_fly = false;
     bird_on_cannon = false;
+    colliding_with_ground = false;
     bird_center_x = x;
     bird_center_y = y;
     bird_radius = 10;
@@ -34,8 +36,16 @@ class Bird {
     circle.initialize(bird_center_x, bird_center_y, bird_radius, true);
   }
 
-  /*private:
-  void initialize(int x, int y) {
+  private:
+  void change_velcities() {
+    velocity_x = velocity_x;
+    velocity_y = velocity_y - (GRAVITY * 0.02);
+  }
+  void set_velocities() {
+    velocity_x = initial_velocity * cos(projection_angle);
+    velocity_y = initial_velocity * sin(projection_angle);
+  }
+  /*void initialize(int x, int y) {
     bird_center_x = x;
     bird_center_y = y;
     circle.initialize(bird_center_x, bird_center_y, 10, true);
@@ -52,61 +62,56 @@ class Bird {
     printf("%f\n",projection_angle * (180.0f/M_PI));
   }
 
-
   void createBird(glm::mat4 VP) {
     circle.makeCircle(VP,bird_center_x ,bird_center_y);
   }
 
   bool flyBird() {
+    printf("Pro%f\n",projection_angle * (180.0f/M_PI));
     if (bird_can_fly && !is_outside_screen()) {
       fly_time += 0.02;
-      set_velocities(fly_time);
+      change_velcities();
       bird_center_x += velocity_x;
-      bird_center_y += (velocity_y - (GRAVITY * fly_time));
+      bird_center_y += velocity_y;
     } else if (is_outside_screen()) {
       bird_on_cannon = false;
     }
   }
 
-  void set_velocities(float fly_time) {
-    velocity_x = ( initial_velocity * cos(projection_angle) );
-    //velocity_y = (increase_velocity * sin(projection_angle) - (GRAVITY * fly_time));
-  }
+
   void increase_angle() {
-    if (!bird_can_fly || bird_on_cannon) {
+    if (!bird_can_fly && bird_on_cannon) {
       projection_angle += 5 * (M_PI/180.0f);
       printf("%f\n",projection_angle * (180.0f/M_PI));
     }
   }
 
   void decrease_angle() {
-    if (!bird_can_fly || bird_on_cannon) {
+    if (!bird_can_fly && bird_on_cannon) {
       projection_angle -= 5 * (M_PI/180.0f);
       printf("%f\n",projection_angle * (180.0f/M_PI));
     }
   }
 
   void increase_velocity() {
-    if (!bird_can_fly || bird_on_cannon ) {
-      velocity_x += VELOCITY_DIFF * cos(projection_angle);
-      velocity_y += VELOCITY_DIFF * sin(projection_angle);
-      //initial_velocity += VELOCITY_DIFF;
+    if (!bird_can_fly && bird_on_cannon ) {
+      initial_velocity += VELOCITY_DIFF;
       //printf("%f\n",initial_velocity );
     }
   }
 
   void decrease_velocity() {
-    if (!bird_can_fly || bird_on_cannon ) {
-      velocity_x -= VELOCITY_DIFF * cos(projection_angle);
-      velocity_y -= VELOCITY_DIFF * sin(projection_angle);
-      //initial_velocity -= VELOCITY_DIFF;
+    if (!bird_can_fly && bird_on_cannon ) {
+      initial_velocity -= VELOCITY_DIFF;
       //printf("%f\n",initial_velocity );
     }
   }
 
-  void set_fly_status() {
-    bird_can_fly = !bird_can_fly;
-
+  void set_fly_status(bool value) {
+    bird_can_fly = value;
+    if (bird_can_fly) {
+      set_velocities();
+    }
   }
 
   bool get_fly_status() {
@@ -144,14 +149,14 @@ class Bird {
   }
   // cor -> cofficient of restitution
   // collision_angle -> angle made by x-component of velocity of bird with line of impact
-  void collision(float cor, float collision_angle) {
+  void collision(float collision_angle,float cor = 1.0f) {
     if (collision_angle == 0.0) {
       // bird collided with a wall perpendicular to x-axis
       velocity_x = -velocity_x;
     } else if (collision_angle == 90.0) {
       // ball collided with ground
       printf("Collison with ground\n" );
-      velocity_y = -(velocity_y);
+      velocity_y = -(cor * velocity_y);
     }
   }
 

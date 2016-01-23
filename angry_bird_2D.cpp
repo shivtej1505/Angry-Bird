@@ -156,9 +156,8 @@ void quit(GLFWwindow *window) {
     exit(EXIT_SUCCESS);
 }
 
-void set_fly_status_birds() {
-	birds.at(bird_number).set_fly_status();
-	return;
+void set_fly_status_birds(bool value) {
+	birds.at(bird_number).set_fly_status(value);
 }
 
 void create_birds(glm::mat4 VP) {
@@ -169,28 +168,23 @@ void create_birds(glm::mat4 VP) {
 }
 
 void decrease_velocity_birds() {
-	birds.at(bird_number).decrease_angle();
-	return;
+	birds.at(bird_number).decrease_velocity();
 }
 
 void increase_velocity_birds() {
 	birds.at(bird_number).increase_velocity();
-	return;
 }
 
 void decrease_angle_birds() {
 	birds.at(bird_number).decrease_angle();
-	return;
 }
 
 void increase_angle_birds() {
 	birds.at(bird_number).increase_angle();
-	return;
 }
 
 void fly_birds() {
 	birds.at(bird_number).flyBird();
-	return;
 }
 
 void check_collision() {
@@ -198,10 +192,13 @@ void check_collision() {
 	//Bird bird = birds.at(bird_number);
 	float bird_center_x = birds.at(bird_number).get_center_x();
 	float bird_center_y = birds.at(bird_number).get_center_y();
-	if (-295.0 <= bird_center_y && bird_center_y <= -285.0 && tmp) {
+	if (-295.0 <= bird_center_y && bird_center_y <= -285.0 &&
+			!birds.at(bird_number).colliding_with_ground) {
 		printf("Collison\n" );
-		birds.at(bird_number).collision(0.0f, 90.0f);
-		tmp = !tmp;
+		birds.at(bird_number).collision(90.0f, 0.8f);
+		birds.at(bird_number).colliding_with_ground = true;
+	} else {
+		birds.at(bird_number).colliding_with_ground = false;
 	}
 }
 
@@ -229,11 +226,11 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
 								cannon.decreaseAngle();
 		            break;
 						case GLFW_KEY_R:
-								set_fly_status_birds();
+								set_fly_status_birds(true);
 		            break;
 						case GLFW_KEY_SPACE:
 						// Pause the game
-		            //bird.set_fly_status();
+		            set_fly_status_birds(false);
 		            break;
             default:
                 break;
