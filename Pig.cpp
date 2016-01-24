@@ -6,6 +6,7 @@ class Pig {
   float breath;
   float center_x;
   float center_y;
+  float size;
 
   public:
   bool isCollide;
@@ -13,6 +14,7 @@ class Pig {
   public:
   Pig(float cen_x, float cen_y, float l, float b, bool fill) {
     angle = 0.0f;
+    size = 1.0f;
     center_x = cen_x;
     center_y = cen_y;
     length = l;
@@ -26,7 +28,7 @@ class Pig {
   }
 
   void createPig(glm::mat4 VP) {
-    rectangle.makeRectangle(VP, center_x, center_y, angle, 0, 0);
+    rectangle.makeRectangle(VP, center_x, center_y, angle, 0, 0, size);
     //angle += 1.0f;
   }
 
@@ -61,5 +63,10 @@ class Pig {
     if ((dis_x) <= length  && dis_x >= 0 &&  dis_y <= 10)
       return true;
     return false;
+  }
+
+  void reduceSize() {
+    size -= 0.1f;
+    //printf("Size reduced\n" );
   }
 };

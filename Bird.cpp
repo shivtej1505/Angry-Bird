@@ -72,7 +72,9 @@ class Bird {
 
   bool flyBird() {
     //printf("Pro%f\n",projection_angle * (180.0f/M_PI));
-    if (bird_can_fly && !is_outside_screen()) {
+    //printf("Fly%d\n", bird_can_fly);
+    //printf("onCannon%d\n", bird_on_cannon);
+    if (bird_can_fly && !bird_on_cannon && !is_outside_screen()) {
       fly_time += 0.02;
       change_velcities();
       bird_center_x += velocity_x;
@@ -100,15 +102,31 @@ class Bird {
   void increase_velocity() {
     if (!bird_can_fly && bird_on_cannon ) {
       initial_velocity += VELOCITY_DIFF;
-      //printf("%f\n",initial_velocity );
+      printf("%f\n",initial_velocity );
     }
   }
 
   void decrease_velocity() {
     if (!bird_can_fly && bird_on_cannon ) {
       initial_velocity -= VELOCITY_DIFF;
-      //printf("%f\n",initial_velocity );
+      printf("%f\n",initial_velocity );
     }
+  }
+
+  void set_velocity(float velocity) {
+    initial_velocity = velocity;
+  }
+
+  float get_velocity() {
+    return initial_velocity;
+  }
+
+  void set_projection_angle(float angle) {
+    projection_angle = angle * (M_PI/180.0f);
+  }
+
+  float get_projection_angle() {
+    return projection_angle * (180.0f/M_PI);
   }
 
   void set_fly_status(bool value) {
@@ -151,6 +169,7 @@ class Bird {
   float get_center_y() {
     return bird_center_y;
   }
+
   // cor -> cofficient of restitution
   // collision_angle -> angle made by x-component of velocity of bird with line of impact
   void collision(float collision_angle,float cor = 1.0f) {

@@ -12,17 +12,18 @@ class Rectangle {
     createRectangle(length, breath, fill);
   }
 
-  void makeRectangle(glm::mat4 VP, float x = 0.0f, float y = 0.0f, float angle = 0.0f, float rotX = 0, float rotY = 0) {
+  void makeRectangle(glm::mat4 VP, float x = 0.0f, float y = 0.0f, float angle = 0.0f, float rotX = 0, float rotY = 0, float scaling = 1.0f) {
     glm::mat4 MVP;
     Matrices.model = glm::mat4(1.0f);
     float rotAngle = (float) angle * (M_PI/180.0f);
 
+    glm::mat4 scalingMatrix = glm::scale(glm::vec3(scaling, scaling ,scaling));
     glm::mat4 translateRectangle = glm::translate (glm::vec3(rotX, rotY, 0.0f)); // glTranslatef
     glm::mat4 rotateRectangle = glm::rotate(rotAngle, glm::vec3(0,0,1));  // rotate about vector (0,0,1) Rotating about z-axis
     glm::mat4 translateRectangle_1 = glm::translate (glm::vec3(-rotX, -rotY, 0.0f)); // glTranslatef
     glm::mat4 translateRectangle_2 = glm::translate (glm::vec3(x, y, 0.0f)); // glTranslatef
 
-    Matrices.model *= (translateRectangle_2 * translateRectangle * rotateRectangle * translateRectangle_1   );// * scaleTriangle);
+    Matrices.model *= (translateRectangle_2 * translateRectangle * rotateRectangle * translateRectangle_1 * scalingMatrix  );// * scaleTriangle);
     MVP = VP * Matrices.model; // MVP = p * V * M
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
     //draw3DObject(triangle1);

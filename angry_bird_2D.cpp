@@ -129,11 +129,8 @@ void add_new_obstacle(int center_x, int center_y, bool fill = true) {
 }
 
 
-void next_bird() {
-	if (bird_number >= birds.size()) {
-		printf("No bird left\n" );
-		return;
-	}
+void next_bird(float velocity, float angle) {
+
 	if (!birds.at(bird_number).get_bird_on_cannon()) {
 		printf("next bird now!\n" );
 		bird_number++;
@@ -143,9 +140,12 @@ void next_bird() {
 		}
 		birds.at(bird_number).put_on_cannon();
 		birds.at(bird_number).set_bird_on_cannon(true);
+		birds.at(bird_number).set_velocity(velocity);
+		birds.at(bird_number).set_projection_angle(angle);
+		printf("Bird number%d\n", bird_number);
 		for(int bird_num = bird_number+1; bird_num < birds.size(); bird_num++) {
 			(birds.at(bird_num)).move_forward();// Move forward in queue
-			printf("%d %d\n",bird_num, (birds.at(bird_num)).get_bird_on_cannon() );
+			//printf("%d %d\n",bird_num, (birds.at(bird_num)).get_bird_on_cannon() );
 		}
 		//reset();
 	}
@@ -154,8 +154,12 @@ void next_bird() {
 // reset cannon and bird velocity and angle
 void reset() {
 	//birds.at(bird_number).print(bird_number);
-	cannon.reset();
-	next_bird();
+	//cannon.reset();
+	float velocity = birds.at(bird_number).get_velocity();
+	float angle = birds.at(bird_number).get_projection_angle();
+	//printf("Bird number%d\n", bird_number);
+	printf("Velocity %f Angle %f\n",velocity, angle );
+	next_bird(velocity, angle);
 }
 
 void initialize_elements(int number_bird = 8) {
@@ -199,7 +203,12 @@ void create_obstacles(glm::mat4 VP) {
 }
 
 void set_fly_status_birds(bool value) {
-	birds.at(bird_number).set_fly_status(value);
+	if (bird_number >= birds.size()) {
+		printf("No bird left\n" );
+		return;
+	}
+	birds.at(bird_number).set_fly_status(true);
+	birds.at(bird_number).set_bird_on_cannon(false);
 	reset();
 }
 
@@ -211,23 +220,37 @@ void create_birds(glm::mat4 VP) {
 }
 
 void decrease_velocity_birds() {
+	if (bird_number >= birds.size()) {
+		return;
+	}
 	birds.at(bird_number).decrease_velocity();
 }
 
 void increase_velocity_birds() {
+	if (bird_number >= birds.size()) {
+		return;
+	}
 	birds.at(bird_number).increase_velocity();
 }
 
 void decrease_angle_birds() {
+	if (bird_number >= birds.size()) {
+		return;
+	}
 	birds.at(bird_number).decrease_angle();
 }
 
 void increase_angle_birds() {
+	if (bird_number >= birds.size()) {
+		return;
+	}
 	birds.at(bird_number).increase_angle();
 }
 
 void fly_birds() {
-	birds.at(bird_number).flyBird();
+	for (int bird_num = 0 ; bird_num < birds.size(); bird_num ++) {
+		birds.at(bird_num).flyBird();
+	}
 }
 
 void drop_obstacles() {
@@ -240,53 +263,58 @@ void drop_obstacles() {
 void check_collision() {
 	// bird and ground
 	//Bird bird = birds.at(bird_number);
-	float bird_center_x = birds.at(bird_number).get_center_x();
-	float bird_center_y = birds.at(bird_number).get_center_y();
-	if (-295.0 <= bird_center_y && bird_center_y <= -285.0 &&
-			!birds.at(bird_number).colliding_with_ground) {
-		printf("Collison with ground\n" );
-		birds.at(bird_number).collision(90.0f, 0.8f);
-		birds.at(bird_number).colliding_with_ground = true;
-	} else {
-		birds.at(bird_number).colliding_with_ground = false;
-	}
-	vector<Pig>::iterator pig;
-	for(pig = pigs.begin(); pig != pigs.end(); pig++) {
-		bool collidingWithAorC = (*pig).isCollidingFromSideA(bird_center_x,
-			bird_center_y) || (*pig).isCollidingFromSideC(bird_center_x, bird_center_y);
-		bool collidingWithBorD = (*pig).isCollidingFromSideB(bird_center_x,
-			bird_center_y) || (*pig).isCollidingFromSideD(bird_center_x, bird_center_y);
-		//printf("Dis %f\n", dis );
-		if (!(*pig).isCollide ) {
-			if (collidingWithAorC) {
-				birds.at(bird_number).collision(0.0f, 0.8f);
-				(*pig).isCollide = true;
-			} else if (collidingWithBorD) {
-				birds.at(bird_number).collision(90.0f, 0.8f);
-				(*pig).isCollide = true;
-			}
+	for (int bird_num = 0 ; bird_num < birds.size(); bird_num ++) {
+		float bird_center_x = birds.at(bird_num).get_center_x();
+		float bird_center_y = birds.at(bird_num).get_center_y();
+		if (-295.0 <= bird_center_y && bird_center_y <= -285.0 &&
+				!birds.at(bird_num).colliding_with_ground) {
+			printf("Collison with ground\n" );
+			birds.at(bird_num).collision(90.0f, 0.8f);
+			birds.at(bird_num).colliding_with_ground = true;
 		} else {
-			(*pig).isCollide = false;
+			birds.at(bird_num).colliding_with_ground = false;
 		}
-	}
+		vector<Pig>::iterator pig;
+		for(pig = pigs.begin(); pig != pigs.end(); pig++) {
+			bool collidingWithAorC = (*pig).isCollidingFromSideA(bird_center_x,
+				bird_center_y) || (*pig).isCollidingFromSideC(bird_center_x, bird_center_y);
+			bool collidingWithBorD = (*pig).isCollidingFromSideB(bird_center_x,
+				bird_center_y) || (*pig).isCollidingFromSideD(bird_center_x, bird_center_y);
+			//printf("Dis %f\n", dis );
+			if (!(*pig).isCollide ) {
+				if (collidingWithAorC) {
+					birds.at(bird_num).collision(0.0f, 0.8f);
+					(*pig).isCollide = true;
+					(*pig).reduceSize();
+				} else if (collidingWithBorD) {
+					birds.at(bird_num).collision(90.0f, 0.8f);
+					(*pig).isCollide = true;
+					(*pig).reduceSize();
+				}
 
-	vector<Obstacle>::iterator obstacle;
-	for(obstacle = obstacles.begin(); obstacle != obstacles.end(); obstacle++) {
-		bool collidingWithAorC = (*obstacle).isCollidingFromSideA(bird_center_x,
-			bird_center_y) || (*obstacle).isCollidingFromSideC(bird_center_x, bird_center_y);
-		bool collidingWithBorD = (*obstacle).isCollidingFromSideB(bird_center_x,
-			bird_center_y) || (*obstacle).isCollidingFromSideD(bird_center_x, bird_center_y);
-		//printf("Dis %f\n", dis );
-		if (!(*obstacle).isCollide ) {
-			if (collidingWithAorC) {
-				birds.at(bird_number).collision(0.0f, 0.8f);
-				(*obstacle).isCollide = true;
-			} else if (collidingWithBorD) {
-				birds.at(bird_number).collision(90.0f, 0.8f);
-				(*obstacle).isCollide = true;
+			} else {
+				(*pig).isCollide = false;
 			}
-		} else {
-			(*obstacle).isCollide = false;
+		}
+
+		vector<Obstacle>::iterator obstacle;
+		for(obstacle = obstacles.begin(); obstacle != obstacles.end(); obstacle++) {
+			bool collidingWithAorC = (*obstacle).isCollidingFromSideA(bird_center_x,
+				bird_center_y) || (*obstacle).isCollidingFromSideC(bird_center_x, bird_center_y);
+			bool collidingWithBorD = (*obstacle).isCollidingFromSideB(bird_center_x,
+				bird_center_y) || (*obstacle).isCollidingFromSideD(bird_center_x, bird_center_y);
+			//printf("Dis %f\n", dis );
+			if (!(*obstacle).isCollide ) {
+				if (collidingWithAorC) {
+					birds.at(bird_num).collision(0.0f, 0.8f);
+					(*obstacle).isCollide = true;
+				} else if (collidingWithBorD) {
+					birds.at(bird_num).collision(90.0f, 0.8f);
+					(*obstacle).isCollide = true;
+				}
+			} else {
+				(*obstacle).isCollide = false;
+			}
 		}
 	}
 }
@@ -520,7 +548,7 @@ int main (int argc, char** argv)
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.02) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.01) { // atleast 0.5s elapsed since last frame
             // do something every 0.02 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.02;
