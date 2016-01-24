@@ -10,6 +10,7 @@ class Pig {
 
   public:
   bool isCollide;
+  bool isKilled;
 
   public:
   Pig(float cen_x, float cen_y, float l, float b, bool fill) {
@@ -20,6 +21,7 @@ class Pig {
     length = l;
     breath = b;
     isCollide = false;
+    isKilled = false;
     initialize(fill);
   }
 
@@ -66,7 +68,11 @@ class Pig {
   }
 
   void reduceSize() {
-    size -= 0.1f;
+    if (size > 0.0f)
+      size -= 0.5f;
+    else
+      isKilled = true;
+    printf("Scored\n" );
     //printf("Size reduced\n" );
   }
 };

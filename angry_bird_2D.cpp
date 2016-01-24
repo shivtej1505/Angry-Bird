@@ -3,14 +3,16 @@
 #include <fstream>
 #include <vector>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <glad/glad.h>
+#include <FTGL/ftgl.h>
+#include <GLFW/glfw3.h>
+#include <SOIL/SOIL.h>
+
 #include "game_config.h"
 #include "Bird.cpp"
 #include "Cannon.cpp"
@@ -22,7 +24,7 @@ using namespace std;
 vector <Bird> birds;
 int bird_number = 0;
 
-GLuint programID;
+GLuint programID, fontProgramID, textureProgramID;;
 Cannon cannon;
 Ground ground;
 
@@ -60,7 +62,7 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	int InfoLogLength;
 
 	// Compile Vertex Shader
-	printf("Compiling shader : %s\n", vertex_file_path);
+	cout << "Compiling shader : " <<  vertex_file_path << endl;
 	char const * VertexSourcePointer = VertexShaderCode.c_str();
 	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
 	glCompileShader(VertexShaderID);
@@ -68,12 +70,12 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	// Check Vertex Shader
 	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> VertexShaderErrorMessage(InfoLogLength);
+	std::vector<char> VertexShaderErrorMessage( max(InfoLogLength, int(1)) );
 	glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-	fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
+	cout << VertexShaderErrorMessage.data() << endl;
 
 	// Compile Fragment Shader
-	printf("Compiling shader : %s\n", fragment_file_path);
+	cout << "Compiling shader : " << fragment_file_path << endl;
 	char const * FragmentSourcePointer = FragmentShaderCode.c_str();
 	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
 	glCompileShader(FragmentShaderID);
@@ -81,12 +83,12 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	// Check Fragment Shader
 	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> FragmentShaderErrorMessage(InfoLogLength);
+	std::vector<char> FragmentShaderErrorMessage( max(InfoLogLength, int(1)) );
 	glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-	fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
+	cout << FragmentShaderErrorMessage.data() << endl;
 
 	// Link the program
-	fprintf(stdout, "Linking program\n");
+	cout << "Linking program" << endl;
 	GLuint ProgramID = glCreateProgram();
 	glAttachShader(ProgramID, VertexShaderID);
 	glAttachShader(ProgramID, FragmentShaderID);
@@ -97,7 +99,7 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	std::vector<char> ProgramErrorMessage( max(InfoLogLength, int(1)) );
 	glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-	fprintf(stdout, "%s\n", &ProgramErrorMessage[0]);
+	cout << ProgramErrorMessage.data() << endl;
 
 	glDeleteShader(VertexShaderID);
 	glDeleteShader(FragmentShaderID);
@@ -393,6 +395,26 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods) {
     }
 }
 
+glm::vec3 getRGBfromHue (int hue)
+{
+	float intp;
+	float fracp = modff(hue/60.0, &intp);
+	float x = 1.0 - abs((float)((int)intp%2)+fracp-1.0);
+
+	if (hue < 60)
+		return glm::vec3(1,x,0);
+	else if (hue < 120)
+		return glm::vec3(x,1,0);
+	else if (hue < 180)
+		return glm::vec3(0,1,x);
+	else if (hue < 240)
+		return glm::vec3(0,x,1);
+	else if (hue < 300)
+		return glm::vec3(x,0,1);
+	else
+		return glm::vec3(1,0,x);
+}
+
 /* Executed when window is resized to 'width' and 'height' */
 /* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
 void reshapeWindow (GLFWwindow* window, int width, int height) {
@@ -452,59 +474,106 @@ void draw () {
   create_birds(VP);
 	cannon.createCannon(VP);
 	ground.createGround(VP);
+
+	static int fontScale = 0;
+	float fontScaleValue = 0.75 + 0.75*sinf(fontScale*M_PI/180.0f);
+	glm::vec3 fontColor = getRGBfromHue (fontScale);
+
+	glm::mat4 MVP;
+	// Transform the text
+	Matrices.model = glm::mat4(1.0f);
+	//glm::mat4 translateText = glm::translate(glm::vec3(-3,2,0));
+	//glm::mat4 scaleText = glm::scale(glm::vec3(fontScaleValue,fontScaleValue,fontScaleValue));
+	//Matrices.model *= (translateText * scaleText);
+	MVP = Matrices.projection * Matrices.view * Matrices.model;
+	// send font's MVP and font color to fond shaders
+	glUniformMatrix4fv(GL3Font.fontMatrixID, 1, GL_FALSE, &MVP[0][0]);
+	glUniform3fv(GL3Font.fontColorID, 1, &fontColor[0]);
+
+	// Render font
+	GL3Font.font->Render("Round n Round we go !!");
+
+
+	//camera_rotation_angle++; // Simulating camera rotation
+	//triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
+	//rectangle_rotation = rectangle_rotation + increments*rectangle_rot_dir*rectangle_rot_status;
+
+	// font size and color changes
+	fontScale = (fontScale + 1) % 360;
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
 /* Nothing to Edit here */
-GLFWwindow* initGLFW (int width, int height) {
-    GLFWwindow* window; // window desciptor/handle
+GLFWwindow* initGLFW (int width, int height)
+{
+	GLFWwindow* window; // window desciptor/handle
 
-    glfwSetErrorCallback(error_callback);
-    if (!glfwInit()) {
-        exit(EXIT_FAILURE);
-    }
+	glfwSetErrorCallback(error_callback);
+	if (!glfwInit()) {
+		exit(EXIT_FAILURE);
+	}
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(width, height, "Angry Bird", NULL, NULL);
+	window = glfwCreateWindow(width, height, "Angry Bird", NULL, NULL);
 
-    if (!window) {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
+	if (!window) {
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
 
-    glfwMakeContextCurrent(window);
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    glfwSwapInterval( 1 );
+	glfwMakeContextCurrent(window);
+	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+	glfwSwapInterval( 1 );
 
-    /* --- register callbacks with GLFW --- */
+	/* --- register callbacks with GLFW --- */
 
-    /* Register function to handle window resizes */
-    /* With Retina display on Mac OS X GLFW's FramebufferSize
-     is different from WindowSize */
-    glfwSetFramebufferSizeCallback(window, reshapeWindow);
-    glfwSetWindowSizeCallback(window, reshapeWindow);
+	/* Register function to handle window resizes */
+	/* With Retina display on Mac OS X GLFW's FramebufferSize
+	 is different from WindowSize */
+	glfwSetFramebufferSizeCallback(window, reshapeWindow);
+	glfwSetWindowSizeCallback(window, reshapeWindow);
 
-    /* Register function to handle window close */
-    glfwSetWindowCloseCallback(window, quit);
+	/* Register function to handle window close */
+	glfwSetWindowCloseCallback(window, quit);
 
-    /* Register function to handle keyboard input */
-    glfwSetKeyCallback(window, keyboard);      // general keyboard input
-    glfwSetCharCallback(window, keyboardChar);  // simpler specific character handling
+	/* Register function to handle keyboard input */
+	glfwSetKeyCallback(window, keyboard);      // general keyboard input
+	glfwSetCharCallback(window, keyboardChar);  // simpler specific character handling
 
-    /* Register function to handle mouse click */
-    glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
+	/* Register function to handle mouse click */
+	glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
 
-    return window;
+	return window;
 }
 
 /* Initialize the OpenGL rendering properties */
 /* Add all the models to be created here */
-void initGL (GLFWwindow* window, int width, int height) {
-  /* Objects should be created before any other gl function and shaders */
+void initGL (GLFWwindow* window, int width, int height)
+{
+	// Load Textures
+	// Enable Texture0 as current texture memory
+	glActiveTexture(GL_TEXTURE0);
+	// load an image file directly as a new OpenGL texture
+	// GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
+	//GLuint textureID = createTexture("beach2.png");
+	// check for an error during the load process
+	//if(textureID == 0 )
+	//	cout << "SOIL loading error: '" << SOIL_last_result() << "'" << endl;
+
+	// Create and compile our GLSL program from the texture shaders
+	textureProgramID = LoadShaders( "TextureRender.vert", "TextureRender.frag" );
+	// Get a handle for our "MVP" uniform
+	Matrices.TexMatrixID = glGetUniformLocation(textureProgramID, "MVP");
+
+
+	/* Objects should be created before any other gl function and shaders */
+	// Create the models
+	//createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
+	//createRectangle (textureID);
 
 
 	// Create and compile our GLSL program from the shaders
@@ -515,17 +584,46 @@ void initGL (GLFWwindow* window, int width, int height) {
 
 	reshapeWindow (window, width, height);
 
-    // Background color of the scene
+	// Background color of the scene
 	glClearColor (0.3f, 0.3f, 0.3f, 0.0f); // R, G, B, A
 	glClearDepth (1.0f);
 
 	glEnable (GL_DEPTH_TEST);
 	glDepthFunc (GL_LEQUAL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    cout << "VENDOR: " << glGetString(GL_VENDOR) << endl;
-    cout << "RENDERER: " << glGetString(GL_RENDERER) << endl;
-    cout << "VERSION: " << glGetString(GL_VERSION) << endl;
-    cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+	// Initialise FTGL stuff
+	const char* fontfile = "arial.ttf";
+	GL3Font.font = new FTExtrudeFont(fontfile); // 3D extrude style rendering
+
+	if(GL3Font.font->Error())
+	{
+		cout << "Error: Could not load font `" << fontfile << "'" << endl;
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
+
+	// Create and compile our GLSL program from the font shaders
+	fontProgramID = LoadShaders( "fontrender.vert", "fontrender.frag" );
+	GLint fontVertexCoordAttrib, fontVertexNormalAttrib, fontVertexOffsetUniform;
+	fontVertexCoordAttrib = glGetAttribLocation(fontProgramID, "vertexPosition");
+	fontVertexNormalAttrib = glGetAttribLocation(fontProgramID, "vertexNormal");
+	fontVertexOffsetUniform = glGetUniformLocation(fontProgramID, "pen");
+	GL3Font.fontMatrixID = glGetUniformLocation(fontProgramID, "MVP");
+	GL3Font.fontColorID = glGetUniformLocation(fontProgramID, "fontColor");
+
+	GL3Font.font->ShaderLocations(fontVertexCoordAttrib, fontVertexNormalAttrib, fontVertexOffsetUniform);
+	GL3Font.font->FaceSize(1);
+	GL3Font.font->Depth(0);
+	GL3Font.font->Outset(0, 0);
+	GL3Font.font->CharMap(ft_encoding_unicode);
+
+	cout << "VENDOR: " << glGetString(GL_VENDOR) << endl;
+	cout << "RENDERER: " << glGetString(GL_RENDERER) << endl;
+	cout << "VERSION: " << glGetString(GL_VERSION) << endl;
+	cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+
 }
 
 int main (int argc, char** argv)
