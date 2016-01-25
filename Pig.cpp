@@ -68,10 +68,16 @@ class Pig {
   }
 
   void reduceSize() {
-    if (size > 0.0f)
+    if (size > 0.0f) {
       size -= 0.5f;
-    else
+      length = length/2.0f;
+      breath = breath/2.0f;
+    }
+    else {
       isKilled = true;
+      length = 0.0f;
+      breath = 0.0f;
+    }
     printf("Scored\n" );
     //printf("Size reduced\n" );
   }

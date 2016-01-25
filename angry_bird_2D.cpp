@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include <string>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -19,14 +20,18 @@
 #include "Ground.cpp"
 #include "Pig.cpp"
 #include "Obstacle.cpp"
+#include "Text.cpp"
 
 using namespace std;
 vector <Bird> birds;
 int bird_number = 0;
 
+int score = 0;
+
 GLuint programID, fontProgramID, textureProgramID;;
 Cannon cannon;
 Ground ground;
+Text text;
 
 vector<Pig> pigs;
 vector<Obstacle> obstacles;
@@ -172,12 +177,13 @@ void initialize_elements(int number_bird = 8) {
 	}
 	cannon.initialize();
 	ground.initialize();
-	for (int i=0; i<2; i++) {
-		if(i&1) {
-			add_new_pig(100 , -100);
-		} else {
-			add_new_pig(100 , 100);
-		}
+	for (int i=0; i<6; i++) {
+		if (i<3)
+			add_new_pig(300 + i * 50 , -300);
+		else if (i<5)
+			add_new_pig(325 + (i-3) * 50, -250);
+		else
+			add_new_pig(350 + (i-5) * 50, -200);
 	}
 	for (int i=0; i<3; i++) {
 		add_new_obstacle(rand()%700 - 200, rand()%1000 + 100);
@@ -288,10 +294,12 @@ void check_collision() {
 					birds.at(bird_num).collision(0.0f, 0.8f);
 					(*pig).isCollide = true;
 					(*pig).reduceSize();
+					score += 10;
 				} else if (collidingWithBorD) {
 					birds.at(bird_num).collision(90.0f, 0.8f);
 					(*pig).isCollide = true;
 					(*pig).reduceSize();
+					score += 10;
 				}
 
 			} else {
@@ -460,46 +468,34 @@ void draw () {
   // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
   glm::vec3 up (0, 1, 0);
 
-  // Compute Camera matrix (view)
-  // Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-  //  Don't change unless you are sure!!
-  Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
+	static float c = 0;
+	c++;
+	//Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(sinf(c*M_PI/180.0),3*cosf(c*M_PI/180.0),0)); // Fixed camera for 2D (ortho) in XY plane
+	Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
+	// Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
+	//  Don't change unless you are sure!!
 
-  // Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
-  //  Don't change unless you are sure!!
   glm::mat4 VP = Matrices.projection * Matrices.view;
+
 
 	create_obstacles(VP);
 	create_pigs(VP);
-  create_birds(VP);
+	create_birds(VP);
 	cannon.createCannon(VP);
 	ground.createGround(VP);
 
 	static int fontScale = 0;
-	float fontScaleValue = 0.75 + 0.75*sinf(fontScale*M_PI/180.0f);
+	float fontScaleValue = 40;
 	glm::vec3 fontColor = getRGBfromHue (fontScale);
 
-	glm::mat4 MVP;
-	// Transform the text
-	Matrices.model = glm::mat4(1.0f);
-	//glm::mat4 translateText = glm::translate(glm::vec3(-3,2,0));
-	//glm::mat4 scaleText = glm::scale(glm::vec3(fontScaleValue,fontScaleValue,fontScaleValue));
-	//Matrices.model *= (translateText * scaleText);
-	MVP = Matrices.projection * Matrices.view * Matrices.model;
-	// send font's MVP and font color to fond shaders
-	glUniformMatrix4fv(GL3Font.fontMatrixID, 1, GL_FALSE, &MVP[0][0]);
-	glUniform3fv(GL3Font.fontColorID, 1, &fontColor[0]);
 
-	// Render font
-	GL3Font.font->Render("Round n Round we go !!");
+	// Use font Shaders for next part of code
+	glUseProgram(fontProgramID);
+	//Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
 
-
-	//camera_rotation_angle++; // Simulating camera rotation
-	//triangle_rotation = triangle_rotation + increments*triangle_rot_dir*triangle_rot_status;
-	//rectangle_rotation = rectangle_rotation + increments*rectangle_rot_dir*rectangle_rot_status;
-
-	// font size and color changes
-	fontScale = (fontScale + 1) % 360;
+	//fontScale = (fontScale + 1) % 360;
+	text.drawScore(score, fontColor, fontScaleValue);
+	//text.drawText("lol", fontColor, fontScaleValue);
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
@@ -588,10 +584,10 @@ void initGL (GLFWwindow* window, int width, int height)
 	glClearColor (0.3f, 0.3f, 0.3f, 0.0f); // R, G, B, A
 	glClearDepth (1.0f);
 
-	glEnable (GL_DEPTH_TEST);
-	glDepthFunc (GL_LEQUAL);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable (GL_DEPTH_TEST);
+	//glDepthFunc (GL_LEQUAL);
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Initialise FTGL stuff
 	const char* fontfile = "arial.ttf";
