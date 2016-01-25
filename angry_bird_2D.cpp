@@ -23,8 +23,13 @@
 #include "Text.cpp"
 
 using namespace std;
+
 vector <Bird> birds;
 int bird_number = 0;
+
+int power_one = false;
+int power_two = false;
+int power_three = false;
 
 int score = 0;
 
@@ -116,13 +121,14 @@ static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
 }
 
-void add_new_bird(int center_x, int center_y, bool is_on_cannon = false) {
+Bird add_new_bird(int center_x, int center_y, bool is_on_cannon = false) {
 	Bird bird(center_x, center_y);
 	if (is_on_cannon) {
 		bird.set_bird_on_cannon(true);
 	}
 	printf("%d\n",bird.get_bird_on_cannon() );
 	birds.push_back(bird);
+	return bird;
 }
 
 void add_new_pig(int center_x, int center_y, bool fill = true) {
@@ -135,9 +141,37 @@ void add_new_obstacle(int center_x, int center_y, bool fill = true) {
 	obstacles.push_back(obstacle);
 }
 
+void activate_power_one() {
+ 	if(!power_one) {
+		float cen_x = birds.at(bird_number-1).get_center_x();
+		float cen_y = birds.at(bird_number-1).get_center_y();
+		power_one = true;
+		printf("Power one activated\n" );
+	} else {
+		printf("Power one used\n" );
+	}
+}
+
+void activate_power_two() {
+ 	if(!power_two) {
+		birds.at(bird_number-1).power_two();
+		power_two = true;
+		printf("Power two activated\n" );
+	} else {
+		printf("Power two used\n" );
+	}
+}
+
+void activate_power_three() {
+ 	if(!power_three) {
+		power_three = true;
+		printf("Power three activated\n" );
+	} else {
+		printf("Power three used\n" );
+	}
+}
 
 void next_bird(float velocity, float angle) {
-
 	if (!birds.at(bird_number).get_bird_on_cannon()) {
 		printf("next bird now!\n" );
 		bird_number++;
@@ -335,43 +369,52 @@ float camera_rotation_angle = 90;
 /* Prefered for Keyboard events */
 // mods --> which key has pressed, can be used to differentiate b/w Shift + c and c
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) {
-     // Function is called first on GLFW_PRESS.
-    if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
-        switch (key) {
-            case GLFW_KEY_F:
-                increase_velocity_birds();
-                break;
-            case GLFW_KEY_S:
-                decrease_velocity_birds();
-                break;
-						case GLFW_KEY_A:
-								increase_angle_birds();
-								cannon.increaseAngle();
-								break;
-						case GLFW_KEY_B:
-								decrease_angle_birds();
-								cannon.decreaseAngle();
-		            break;
-						case GLFW_KEY_R:
-								set_fly_status_birds(true);
-		            break;
-						case GLFW_KEY_SPACE:
-						// Pause the game
-		            set_fly_status_birds(false);
-		            break;
-            default:
-                break;
-        }
-    }
-    else if (action == GLFW_PRESS) {
-        switch (key) {
-            case GLFW_KEY_ESCAPE:
-                quit(window);
-                break;
-            default:
-                break;
-        }
-    }
+	 // Function is called first on GLFW_PRESS.
+	if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
+	    switch (key) {
+	        case GLFW_KEY_F:
+	            increase_velocity_birds();
+	            break;
+	        case GLFW_KEY_S:
+	            decrease_velocity_birds();
+	            break;
+					case GLFW_KEY_A:
+							increase_angle_birds();
+							cannon.increaseAngle();
+							break;
+					case GLFW_KEY_B:
+							decrease_angle_birds();
+							cannon.decreaseAngle();
+	            break;
+					case GLFW_KEY_R:
+							set_fly_status_birds(true);
+	            break;
+					case GLFW_KEY_SPACE:
+					// Pause the game
+	            set_fly_status_birds(false);
+	            break;
+					case GLFW_KEY_1:
+							activate_power_one();
+							break;
+					case GLFW_KEY_2:
+							activate_power_two();
+							break;
+					case GLFW_KEY_3:
+							activate_power_three();
+							break;
+	        default:
+	            break;
+	    }
+	}
+	else if (action == GLFW_PRESS) {
+	    switch (key) {
+	        case GLFW_KEY_ESCAPE:
+	            quit(window);
+	            break;
+	        default:
+	            break;
+	    }
+	}
 }
 
 /* Executed for character input (like in text boxes) */

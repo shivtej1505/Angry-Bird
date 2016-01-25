@@ -39,12 +39,14 @@ class Bird {
 
   private:
   void change_velcities() {
+    printf("Ch%f\n",velocity_x );
     velocity_x = velocity_x;
     velocity_y = velocity_y - (GRAVITY * 0.02);
-    if (colliding_with_ground) {
+    if (colliding_with_ground && velocity_x > 0.0f) {
       velocity_x -= (COFFICENT_OF_FRICTION * 3);
     }
   }
+
   void set_velocities() {
     velocity_x = initial_velocity * cos(projection_angle);
     velocity_y = initial_velocity * sin(projection_angle);
@@ -132,6 +134,7 @@ class Bird {
   void set_fly_status(bool value) {
     if (!bird_can_fly && value) {
       set_velocities();
+      printf("set velocities\n" );
     }
     bird_can_fly = value;
   }
@@ -168,6 +171,10 @@ class Bird {
 
   float get_center_y() {
     return bird_center_y;
+  }
+
+  void power_two() {
+    velocity_x += 10.0f;
   }
 
   // cor -> cofficient of restitution
