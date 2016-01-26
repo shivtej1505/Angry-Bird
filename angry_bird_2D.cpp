@@ -164,6 +164,7 @@ void activate_power_two() {
  	if(!power_two) {
 		birds.at(bird_number-1).power_two();
 		power_two = true;
+		velocity += 10.0f;
 		printf("Power two activated\n" );
 	} else {
 		printf("Power two used\n" );
@@ -489,7 +490,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key) {
 void mouseButton (GLFWwindow* window, int button, int action, int mods) {
     switch (button) {
         case GLFW_MOUSE_BUTTON_LEFT:
-            if (action == GLFW_RELEASE)
+            if (action == GLFW_RELEASE && is_rules_seen)
                 set_fly_status_birds(true);
             break;
         case GLFW_MOUSE_BUTTON_RIGHT:
@@ -506,6 +507,8 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 	float x = xpos - 140;
 	float y = 560 - ypos;
 	float angle = atan(y/x) * (180.0f/M_PI);
+	if (!is_rules_seen)
+		return;
 	cannon.set_cannon_angle(angle);
 	if (bird_number < birds.size())
 		birds.at(bird_number).set_projection_angle(angle);
@@ -513,9 +516,9 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-	if (yoffset > 0)
+	if (yoffset > 0 && is_rules_seen)
 		increase_velocity_birds();
-	else if (yoffset < 0)
+	else if (yoffset < 0 && is_rules_seen)
 		decrease_velocity_birds();
 }
 
@@ -594,7 +597,7 @@ void draw () {
 		text.drawScore(score);
 		text.drawSpeed(velocity);
 		if (score >= 140) {
-			info = "You won! :)";
+			info = "You won !! :)";
 			showText(info, -150, 200, 100, 300);
 		}
 	} else {
@@ -607,16 +610,16 @@ void draw () {
 		string control_string = "GAME CONTROLS";
 		showText(control_string, -350, 70, 70, 100);
 		// CONTROL ONE
-		string control_line_one = "Press Cursor or Keys A, B to change angle";
+		string control_line_one = "Use cursor or keys A, B to change angle";
 		showText(control_line_one, -350, 30, 50, 240);
 		// CONTROL TWO
-		string control_line_two = "Press keys F, S to change speed of bird";
+		string control_line_two = "Use mouse scroll or keys F, S to change speed of bird";
 		showText(control_line_two, -350, 0, 50, 240);
 		// CONTROL THREE
 		string control_line_three = "Press key R to release the bird";
 		showText(control_line_three, -350, -30, 50, 240);
 		// CONTROL FOUR
-		string control_line_four = "Press key 1,2,3 to use powers";
+		string control_line_four = "Press key 2 to use powers";
 		showText(control_line_four, -350, -60, 50, 240);
 		// CONTROL FIVE
 		string control_line_five = "Press key + to zoom in";
@@ -797,7 +800,6 @@ int main (int argc, char** argv) {
 					// after each 5 sec add 5 new obstacles
 					last_update_time_1 = current_time_1;
 					reset_obstacles();
-					printf("Added new obstacles\n" );
 				}
     }
 

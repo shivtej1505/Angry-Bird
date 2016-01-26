@@ -6,6 +6,7 @@ class Bird {
   static const float VELOCITY_DIFF = 2.0f;
   static const float ANGLE_DIFF = 5.0f;
   static const float GRAVITY = 9.8f;
+  static const float AIR_DRAG = 2.0f;
   static const float COFFICENT_OF_FRICTION = 0.3f;
   Circle circle;
   float initial_velocity;
@@ -39,7 +40,7 @@ class Bird {
 
   private:
   void change_velcities() {
-    velocity_x = velocity_x;
+    velocity_x = velocity_x - (AIR_DRAG * 0.02);
     velocity_y = velocity_y - (GRAVITY * 0.02);
     if (colliding_with_ground && velocity_x > 0) {
       velocity_x -= (COFFICENT_OF_FRICTION * 3);
