@@ -4,9 +4,9 @@
 static const int WIDTH = 1000;
 static const int HEIGHT = 600;
 
-static const float MAX_X = (WIDTH/2.0f);
-static const float MIN_X = - (WIDTH/2.0f);
-static const float MAX_Y= (HEIGHT/2.0f);
-static const float MIN_Y= - (HEIGHT/2.0f);
+static const float MAX_X = WIDTH ;
+static const float MIN_X = - WIDTH ;
+static const float MAX_Y= HEIGHT ;
+static const float MIN_Y= - HEIGHT ;
 
 #endif

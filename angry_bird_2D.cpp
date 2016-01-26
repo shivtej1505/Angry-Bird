@@ -24,16 +24,22 @@
 
 using namespace std;
 
+bool is_rules_seen = false;
+
 vector <Bird> birds;
 int bird_number = 0;
+float zoom = 1.0f;
 
 int power_one = false;
 int power_two = false;
 int power_three = false;
 
 int score = 0;
-float velocity = 10.0f;
+float velocity = 15.0f;
 string info;
+
+float target_x = 0.0f;
+float target_y = 0.0f;
 
 GLuint programID, fontProgramID, textureProgramID;;
 Cannon cannon;
@@ -216,7 +222,7 @@ void reset_obstacles() {
 	}
 }
 
-void initialize_elements(int number_bird = 8) {
+void initialize_elements(int number_bird = 12) {
 	add_new_bird(-360, -260, true);
 	//int x_increment =
 	for (int i=0; i<number_bird; i++) {
@@ -241,7 +247,6 @@ void initialize_elements(int number_bird = 8) {
 
 	text.set_score_display(220, 40);
 	text.set_speed_display(50, 40);
-	text.set_text_display(0, 40);
 
 	info = "";
 }
@@ -288,16 +293,20 @@ void decrease_velocity_birds() {
 	if (bird_number >= birds.size()) {
 		return;
 	}
-	birds.at(bird_number).decrease_velocity();
-	velocity -= 2.0f;
+	if (velocity > 2.0f) {
+		birds.at(bird_number).decrease_velocity();
+		velocity -= 2.0f;
+	}
 }
 
 void increase_velocity_birds() {
 	if (bird_number >= birds.size()) {
 		return;
 	}
-	birds.at(bird_number).increase_velocity();
-	velocity += 2.0f;
+	if (velocity < 60.0f) {
+		birds.at(bird_number).increase_velocity();
+		velocity += 2.0f;
+	}
 }
 
 void decrease_angle_birds() {
@@ -350,12 +359,12 @@ void check_collision() {
 			//printf("Dis %f\n", dis );
 			if (!(*pig).isCollide ) {
 				if (collidingWithAorC) {
-					birds.at(bird_num).collision(0.0f, 0.8f);
+					birds.at(bird_num).collision(0.0f, 0.75f);
 					(*pig).isCollide = true;
 					(*pig).reduceSize();
 					score += 10;
 				} else if (collidingWithBorD) {
-					birds.at(bird_num).collision(90.0f, 0.8f);
+					birds.at(bird_num).collision(90.0f, 0.75f);
 					(*pig).isCollide = true;
 					(*pig).reduceSize();
 					score += 10;
@@ -398,34 +407,56 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods) 
 	if (action == GLFW_RELEASE || action == GLFW_REPEAT) {
 	    switch (key) {
 	        case GLFW_KEY_F:
-	            increase_velocity_birds();
+							if (is_rules_seen)
+	            	increase_velocity_birds();
 	            break;
 	        case GLFW_KEY_S:
-	            decrease_velocity_birds();
+							if (is_rules_seen)
+	            	decrease_velocity_birds();
 	            break;
 					case GLFW_KEY_A:
-							increase_angle_birds();
-							cannon.increaseAngle();
+							if (is_rules_seen) {
+								increase_angle_birds();
+								cannon.increaseAngle();
+							}
 							break;
 					case GLFW_KEY_B:
-							decrease_angle_birds();
-							cannon.decreaseAngle();
-	            break;
+							if (is_rules_seen) {
+								decrease_angle_birds();
+								cannon.decreaseAngle();
+	            }
+							break;
 					case GLFW_KEY_R:
-							set_fly_status_birds(true);
+							if (is_rules_seen)
+								set_fly_status_birds(true);
 	            break;
 					case GLFW_KEY_SPACE:
-					// Pause the game
+							if (!is_rules_seen) {
+								is_rules_seen = true;
+								break;
+							}
+							// Pause the game
 	            set_fly_status_birds(false);
 	            break;
 					case GLFW_KEY_1:
-							activate_power_one();
+							if (is_rules_seen)
+								activate_power_one();
 							break;
 					case GLFW_KEY_2:
-							activate_power_two();
+							if (is_rules_seen)
+								activate_power_two();
 							break;
 					case GLFW_KEY_3:
-							activate_power_three();
+							if (is_rules_seen)
+								activate_power_three();
+							break;
+					case GLFW_KEY_KP_ADD:
+							if (zoom > 0.5f && is_rules_seen)
+								zoom = (zoom / 2.0f);
+							break;
+					case GLFW_KEY_KP_SUBTRACT:
+							if (zoom < 2 && is_rules_seen)
+								zoom = (zoom * 2.0f);
 							break;
 	        default:
 	            break;
@@ -478,7 +509,14 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 	cannon.set_cannon_angle(angle);
 	if (bird_number < birds.size())
 		birds.at(bird_number).set_projection_angle(angle);
-	printf("%f\n",angle );
+	//printf("%f\n",angle );
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	if (yoffset > 0)
+		increase_velocity_birds();
+	else if (yoffset < 0)
+		decrease_velocity_birds();
 }
 
 /* Executed when window is resized to 'width' and 'height' */
@@ -507,9 +545,13 @@ void reshapeWindow (GLFWwindow* window, int width, int height) {
     // third and fourth parameter : bound for y-axis
     // fifth parameter : how much near you can see
     // sixth parameter : how much futher you can see, objects after them won't be visible
-    Matrices.projection = glm::ortho(-500.0f, 500.0f, -300.0f, 300.0f, 0.1f, 500.0f);
+    Matrices.projection = glm::ortho(-500.0f * zoom , 500.0f * zoom , -300.0f * zoom , 300.0f * zoom , 0.1f, 500.0f);
 }
 
+void showText(string msg, float xpos = -100, float ypos = 100,
+		float scaleFontValue = 40, float fontScale = 0) {
+	text.drawText(strdup(msg.c_str()), xpos, ypos, scaleFontValue, fontScale);
+}
 /* Edit this function according to your assignment */
 void draw () {
   // clear the color and depth in the frame buffer
@@ -522,7 +564,7 @@ void draw () {
   // Eye - Location of camera. Don't change unless you are sure!!
   glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
   // Target - Where is the camera looking at.  Don't change unless you are sure!!
-  glm::vec3 target (0, 0, 0);
+  glm::vec3 target (target_x, 0, 0);
   // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
   glm::vec3 up (0, 1, 0);
 
@@ -535,21 +577,60 @@ void draw () {
 
   glm::mat4 VP = Matrices.projection * Matrices.view;
 
+	target_x += 10.0f;
 
-	create_obstacles(VP);
-	create_pigs(VP);
-	create_birds(VP);
-	cannon.createCannon(VP);
-	ground.createGround(VP);
+	if (is_rules_seen) {
+		create_obstacles(VP);
+		create_pigs(VP);
+		create_birds(VP);
+		cannon.createCannon(VP);
+		ground.createGround(VP);
 
-	// Use font Shaders for next part of code
-	glUseProgram(fontProgramID);
-	//Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
+		// Use font Shaders for next part of code
+		glUseProgram(fontProgramID);
+		//Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
 
-	//fontScale = (fontScale + 1) % 360;
-	text.drawScore(score);
-	text.drawSpeed(velocity);
-	text.drawText(strdup(info.c_str()));
+		//fontScale = (fontScale + 1) % 360;
+		text.drawScore(score);
+		text.drawSpeed(velocity);
+		if (score >= 140) {
+			info = "You won! :)";
+			showText(info, -150, 200, 100, 300);
+		}
+	} else {
+		glUseProgram(fontProgramID);
+		string title = "ANGRY BIRD";
+		showText(title, -220, 180, 150, 350);
+		string developer = "By :- Shivang Nagaria";
+		showText(developer, 150, 130, 50, 150);
+		// GAME CONTROLS
+		string control_string = "GAME CONTROLS";
+		showText(control_string, -350, 70, 70, 100);
+		// CONTROL ONE
+		string control_line_one = "Press Cursor or Keys A, B to change angle";
+		showText(control_line_one, -350, 30, 50, 240);
+		// CONTROL TWO
+		string control_line_two = "Press keys F, S to change speed of bird";
+		showText(control_line_two, -350, 0, 50, 240);
+		// CONTROL THREE
+		string control_line_three = "Press key R to release the bird";
+		showText(control_line_three, -350, -30, 50, 240);
+		// CONTROL FOUR
+		string control_line_four = "Press key 1,2,3 to use powers";
+		showText(control_line_four, -350, -60, 50, 240);
+		// CONTROL FIVE
+		string control_line_five = "Press key + to zoom in";
+		showText(control_line_five, -350, -90, 50, 240);
+		// CONTROL SIX
+		string control_line_six = "Press key - to zoom out";
+		showText(control_line_six, -350, -120, 50, 240);
+		// CONTROL SEVEN
+		string control_line_seven = "Press key Q to exit";
+		showText(control_line_seven, -350, -150, 50, 240);
+		// CONTROL EIGHT
+		string control_line_eight = "Press spacebar to continue";
+		showText(control_line_eight, -350, -260, 50, 240);
+	}
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
@@ -599,8 +680,10 @@ GLFWwindow* initGLFW (int width, int height) {
 	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
 
 	glfwSetCursor(window, cursor);
-	// Set cursor callback Function
+	// Set cursor callback function
 	glfwSetCursorPosCallback(window, cursor_position_callback);
+	// Set scroll callback funcion
+	glfwSetScrollCallback(window, scroll_callback);
 
 	return window;
 }
@@ -691,6 +774,7 @@ int main (int argc, char** argv) {
     /* Draw in loop */
     while (!glfwWindowShouldClose(window)) {
         // OpenGL Draw commands
+				reshapeWindow(window, WIDTH, HEIGHT);
         draw();
         // Swap Frame Buffer in double buffering
         glfwSwapBuffers(window);
@@ -699,7 +783,7 @@ int main (int argc, char** argv) {
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
-        if ((current_time - last_update_time) >= 0.01) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 0.01 && is_rules_seen) { // atleast 0.5s elapsed since last frame
             // do something every 0.02 seconds ..
             last_update_time = current_time;
             total_time_elapsed += 0.02;
@@ -709,7 +793,7 @@ int main (int argc, char** argv) {
 						//next_bird();
         }
 				current_time_1 = glfwGetTime();
-				if ((current_time_1 - last_update_time_1) >= 5) {
+				if ((current_time_1 - last_update_time_1) >= 5 && is_rules_seen) {
 					// after each 5 sec add 5 new obstacles
 					last_update_time_1 = current_time_1;
 					reset_obstacles();

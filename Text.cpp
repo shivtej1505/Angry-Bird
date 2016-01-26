@@ -8,10 +8,6 @@ class Text {
   float speedFontScaleValue;
   glm::vec3 speedFontColor;
 
-  int textFontScale;
-  float textFontScaleValue;
-  glm::vec3 textFontColor;
-
   private:
   glm::vec3 getRGBfromHue (int hue) {
   	float intp;
@@ -43,12 +39,6 @@ class Text {
     speedFontScale = fontScale;
     speedFontScaleValue = fontScaleValue;
     speedFontColor = getRGBfromHue (fontScale);
-  }
-
-  void set_text_display(int fontScale, float fontScaleValue) {
-    textFontScale = fontScale;
-    textFontScaleValue = fontScaleValue;
-    textFontColor = getRGBfromHue (fontScale);
   }
 
   void drawScore(int score) {
@@ -95,11 +85,12 @@ class Text {
   	GL3Font.font->Render(s);
   }
 
-  void drawText(char *text) {
+  void drawText(char *text, float xpos, float ypos, float scaleFontValue, float fontScale) {
     glm::mat4 MVP;
+    glm::vec3 textFontColor = getRGBfromHue (fontScale);
     Matrices.model = glm::mat4(1.0f);
-  	glm::mat4 translateText = glm::translate(glm::vec3(-100,200,0));
-  	glm::mat4 scaleText = glm::scale(glm::vec3(textFontScaleValue,textFontScaleValue,textFontScaleValue));
+  	glm::mat4 translateText = glm::translate(glm::vec3(xpos, ypos, 0));
+  	glm::mat4 scaleText = glm::scale(glm::vec3(scaleFontValue, scaleFontValue, scaleFontValue));
   	Matrices.model *= (translateText * scaleText);
   	MVP = Matrices.projection * Matrices.view * Matrices.model;
   	// send font's MVP and font color to fond shaders

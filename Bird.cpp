@@ -25,7 +25,7 @@ class Bird {
   int flag;
   public:
   Bird(int x, int y) {
-    initial_velocity = 10.0f;
+    initial_velocity = 15.0f;
     projection_angle = 45.0f * (M_PI/180.0f);
     bird_can_fly = false;
     bird_on_cannon = false;
@@ -181,11 +181,11 @@ class Bird {
   void collision(float collision_angle,float cor = 1.0f) {
     if (collision_angle == 0.0) {
       // bird collided with a wall perpendicular to x-axis
-      printf("Collison with obstacle\n" );
+      //printf("Collison with obstacle\n" );
       velocity_x = -(cor * velocity_x);
     } else if (collision_angle == 90.0) {
       // ball collided with ground
-      printf("Collison with ground\n" );
+      //printf("Collison with ground\n" );
       velocity_y = -(cor * velocity_y);
     }
   }
