@@ -39,10 +39,9 @@ class Bird {
 
   private:
   void change_velcities() {
-    printf("Ch%f\n",velocity_x );
     velocity_x = velocity_x;
     velocity_y = velocity_y - (GRAVITY * 0.02);
-    if (colliding_with_ground && velocity_x > 0.0f) {
+    if (colliding_with_ground && velocity_x > 0) {
       velocity_x -= (COFFICENT_OF_FRICTION * 3);
     }
   }

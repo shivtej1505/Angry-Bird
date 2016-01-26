@@ -30,6 +30,9 @@ class Cannon {
     printf("Cannon%f\n",cannonAngle);
   }
 
+  void set_cannon_angle(float angle) {
+    cannonAngle = angle;
+  }
   void reset() {
     cannonAngle = 45.0f;
   }

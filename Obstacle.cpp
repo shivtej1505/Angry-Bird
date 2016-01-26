@@ -30,6 +30,10 @@ class Obstacle {
     //angle += 3.0f;
   }
 
+  void resetObstacle() {
+    center_x = rand()%700 - 200;
+    center_y = rand()%1000 + 1000;
+  }
   void dropObstacle() {
     center_y -= 5.0f;
     //center_x -= 1.0f;

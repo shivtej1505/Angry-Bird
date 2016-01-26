@@ -32,6 +32,8 @@ int power_two = false;
 int power_three = false;
 
 int score = 0;
+float velocity = 10.0f;
+string info;
 
 GLuint programID, fontProgramID, textureProgramID;;
 Cannon cannon;
@@ -196,11 +198,22 @@ void next_bird(float velocity, float angle) {
 void reset() {
 	//birds.at(bird_number).print(bird_number);
 	//cannon.reset();
-	float velocity = birds.at(bird_number).get_velocity();
-	float angle = birds.at(bird_number).get_projection_angle();
-	//printf("Bird number%d\n", bird_number);
-	printf("Velocity %f Angle %f\n",velocity, angle );
-	next_bird(velocity, angle);
+	if (bird_number < birds.size()) {
+		float velocity = birds.at(bird_number).get_velocity();
+		float angle = birds.at(bird_number).get_projection_angle();
+		//printf("Bird number%d\n", bird_number);
+		printf("Velocity %f Angle %f\n",velocity, angle );
+		next_bird(velocity, angle);
+	} else
+		info = "All bird used";
+		printf("All bird used\n" );
+}
+
+void reset_obstacles() {
+	vector<Obstacle>::iterator obstacle;
+	for(obstacle = obstacles.begin(); obstacle != obstacles.end(); obstacle++) {
+		(*obstacle).resetObstacle();
+	}
 }
 
 void initialize_elements(int number_bird = 8) {
@@ -222,9 +235,19 @@ void initialize_elements(int number_bird = 8) {
 	for (int i=0; i<3; i++) {
 		add_new_obstacle(rand()%700 - 200, rand()%1000 + 100);
 	}
+	//static int fontScale = 0;
+	//float fontScaleValue = 40;
+	//glm::vec3 fontColor = getRGBfromHue (fontScale);
+
+	text.set_score_display(220, 40);
+	text.set_speed_display(50, 40);
+	text.set_text_display(0, 40);
+
+	info = "";
 }
 
 void quit(GLFWwindow *window) {
+		glfwSetCursor(window, NULL);
     glfwDestroyWindow(window);
     glfwTerminate();
     exit(EXIT_SUCCESS);
@@ -266,6 +289,7 @@ void decrease_velocity_birds() {
 		return;
 	}
 	birds.at(bird_number).decrease_velocity();
+	velocity -= 2.0f;
 }
 
 void increase_velocity_birds() {
@@ -273,6 +297,7 @@ void increase_velocity_birds() {
 		return;
 	}
 	birds.at(bird_number).increase_velocity();
+	velocity += 2.0f;
 }
 
 void decrease_angle_birds() {
@@ -434,7 +459,7 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods) {
     switch (button) {
         case GLFW_MOUSE_BUTTON_LEFT:
             if (action == GLFW_RELEASE)
-                //triangle_rot_dir *= -1;
+                set_fly_status_birds(true);
             break;
         case GLFW_MOUSE_BUTTON_RIGHT:
             if (action == GLFW_RELEASE) {
@@ -446,24 +471,14 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods) {
     }
 }
 
-glm::vec3 getRGBfromHue (int hue)
-{
-	float intp;
-	float fracp = modff(hue/60.0, &intp);
-	float x = 1.0 - abs((float)((int)intp%2)+fracp-1.0);
-
-	if (hue < 60)
-		return glm::vec3(1,x,0);
-	else if (hue < 120)
-		return glm::vec3(x,1,0);
-	else if (hue < 180)
-		return glm::vec3(0,1,x);
-	else if (hue < 240)
-		return glm::vec3(0,x,1);
-	else if (hue < 300)
-		return glm::vec3(x,0,1);
-	else
-		return glm::vec3(1,0,x);
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+	float x = xpos - 140;
+	float y = 560 - ypos;
+	float angle = atan(y/x) * (180.0f/M_PI);
+	cannon.set_cannon_angle(angle);
+	if (bird_number < birds.size())
+		birds.at(bird_number).set_projection_angle(angle);
+	printf("%f\n",angle );
 }
 
 /* Executed when window is resized to 'width' and 'height' */
@@ -527,24 +542,19 @@ void draw () {
 	cannon.createCannon(VP);
 	ground.createGround(VP);
 
-	static int fontScale = 0;
-	float fontScaleValue = 40;
-	glm::vec3 fontColor = getRGBfromHue (fontScale);
-
-
 	// Use font Shaders for next part of code
 	glUseProgram(fontProgramID);
 	//Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
 
 	//fontScale = (fontScale + 1) % 360;
-	text.drawScore(score, fontColor, fontScaleValue);
-	//text.drawText("lol", fontColor, fontScaleValue);
+	text.drawScore(score);
+	text.drawSpeed(velocity);
+	text.drawText(strdup(info.c_str()));
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
 /* Nothing to Edit here */
-GLFWwindow* initGLFW (int width, int height)
-{
+GLFWwindow* initGLFW (int width, int height) {
 	GLFWwindow* window; // window desciptor/handle
 
 	glfwSetErrorCallback(error_callback);
@@ -586,13 +596,18 @@ GLFWwindow* initGLFW (int width, int height)
 	/* Register function to handle mouse click */
 	glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
 
+	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+
+	glfwSetCursor(window, cursor);
+	// Set cursor callback Function
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+
 	return window;
 }
 
 /* Initialize the OpenGL rendering properties */
 /* Add all the models to be created here */
-void initGL (GLFWwindow* window, int width, int height)
-{
+void initGL (GLFWwindow* window, int width, int height) {
 	// Load Textures
 	// Enable Texture0 as current texture memory
 	glActiveTexture(GL_TEXTURE0);
@@ -665,8 +680,7 @@ void initGL (GLFWwindow* window, int width, int height)
 
 }
 
-int main (int argc, char** argv)
-{
+int main (int argc, char** argv) {
     GLFWwindow* window = initGLFW(WIDTH, HEIGHT);
 	  initGL (window, WIDTH, HEIGHT);
 
@@ -698,9 +712,7 @@ int main (int argc, char** argv)
 				if ((current_time_1 - last_update_time_1) >= 5) {
 					// after each 5 sec add 5 new obstacles
 					last_update_time_1 = current_time_1;
-					for (int i=0; i<3; i++) {
-						add_new_obstacle(rand()%700 - 200, rand()%1000 + 1000);
-					}
+					reset_obstacles();
 					printf("Added new obstacles\n" );
 				}
     }
